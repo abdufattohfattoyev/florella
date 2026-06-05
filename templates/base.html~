@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="uz-Cyrl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#E85560">
+  <meta name="description" content="Флорелла Кафе — Роллар, пиццалар ва сетлар. Тошкентдаги энг лазиз кафе.">
+  <title>{% block title %}Флорелла Кафе{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/fontawesome.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- ════════ TOP NAV ════════ -->
+<nav id="mainNav">
+  <div class="nav-inner">
+
+    <!-- Logo -->
+    <a class="navbar-brand" href="{% url 'menu:menu_list' %}">
+      <div class="brand-logo">🌸</div>
+      <span>Флорелла</span>
+    </a>
+
+    <!-- Delivery pill (mobile + tablet) -->
+    <button class="nav-delivery-pill d-flex d-lg-none" id="navDeliveryPill"
+            onclick="openLocModal()" aria-label="Yetkazish manzili">
+      <i class="fas fa-location-dot" id="deliveryPillIcon"></i>
+      <span id="deliveryPillText">Манзил танланг</span>
+    </button>
+
+    <!-- Location (desktop) -->
+    <button class="nav-location d-none d-lg-flex" id="navLocationBtn"
+            onclick="openLocModal()">
+      <i class="fas fa-location-dot loc-icon" id="navLocIcon"></i>
+      <span class="loc-text" id="navLocText">Манзил танланг</span>
+      <i class="fas fa-chevron-down loc-chevron"></i>
+    </button>
+
+    <!-- Cart -->
+    <button class="btn-nav-cart d-none d-md-flex" data-bs-toggle="offcanvas"
+            data-bs-target="#cartOffcanvas" aria-label="Саватча">
+      <i class="fas fa-shopping-basket"></i>
+      <span class="cart-count" id="cartCountTop">0</span>
+    </button>
+
+  </div>
+</nav>
+
+<!-- ════════ ALERT MESSAGES ════════ -->
+{% if messages %}
+<div style="position:fixed;top:68px;left:0;right:0;z-index:500;padding:0 14px;">
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-2"
+       role="alert"
+       style="border-radius:12px;font-size:.84rem;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.1);">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ════════ PAGE CONTENT ════════ -->
+{% block content %}{% endblock %}
+
+
+<!-- ════════ CART OFFCANVAS ════════ -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="cartOffcanvas"
+     style="max-width:400px;width:100%;">
+  <div class="offcanvas-header px-4 py-4">
+    <h5 class="offcanvas-title">
+      <i class="fas fa-shopping-basket"></i>
+      Саватча
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body d-flex flex-column px-4 pb-4"
+       style="background:var(--bg); gap:0;">
+    <!-- Items -->
+    <div id="cartItems" class="flex-grow-1 overflow-auto"
+         style="margin:0 -16px; padding:0 16px;">
+      <div class="empty-state">
+        <div class="empty-state__icon">🛒</div>
+        <p style="font-size:.88rem;font-weight:600;color:var(--text-3);">Саватча бўш</p>
+        <p style="font-size:.78rem;color:var(--text-4);">Таом танлаб кўшинг</p>
+      </div>
+    </div>
+    <!-- Total + Checkout -->
+    <div style="padding-top:16px;">
+      <div class="cart-total-row">
+        <span>Жами тўлов</span>
+        <span id="cartTotal">0 сўм</span>
+      </div>
+      <button class="btn-checkout mt-3" id="checkoutBtn"
+              data-bs-toggle="modal" data-bs-target="#orderModal" disabled>
+        <i class="fas fa-receipt"></i>
+        Буюртма бериш
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════ ORDER MODAL ════════ -->
+<div class="modal fade" id="orderModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:480px; padding:0 14px;">
+    <div class="modal-content">
+      <div class="modal-header px-4 py-3">
+        <h5 class="modal-title">
+          <i class="fas fa-receipt"></i>
+          Буюртма маълумотлари
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form method="POST" action="{% url 'orders:order_create' %}">
+        {% csrf_token %}
+        <div class="modal-body p-4" style="display:flex;flex-direction:column;gap:14px;">
+
+          <div>
+            <label class="form-label">Исмингиз <span style="color:var(--primary);">*</span></label>
+            <input type="text" name="customer_name" class="form-control"
+                   required placeholder="Исм Фамилия">
+          </div>
+
+          <div>
+            <label class="form-label">Телефон <span style="color:var(--primary);">*</span></label>
+            <input type="tel" name="customer_phone" class="form-control"
+                   required placeholder="+998 90 123 45 67">
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <label class="form-label">Стол <span style="font-weight:400;opacity:.55;">(ихт.)</span></label>
+              <input type="number" name="table_number" class="form-control" placeholder="№" min="1">
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">Изоҳ <span style="font-weight:400;opacity:.55;">(ихтиёрий)</span></label>
+            <textarea name="note" class="form-control" rows="2"
+                      placeholder="Қўшимча хоҳишлар..."></textarea>
+          </div>
+
+          <input type="hidden" name="cart" id="cartDataInput">
+
+          <!-- Order summary -->
+          <div id="modalOrderSummary"
+               style="background:var(--bg);border-radius:var(--r-sm);padding:14px;
+                      font-size:.83rem;border:1px solid var(--border);">
+          </div>
+        </div>
+
+        <div class="modal-footer px-4 py-3"
+             style="border-top:1px solid var(--border);gap:10px;">
+          <button type="button"
+                  style="flex:1;background:var(--bg);border:1.5px solid var(--border);
+                         color:var(--text-3);border-radius:var(--r-pill);
+                         padding:11px 18px;font-size:.85rem;
+                         font-family:inherit;cursor:pointer;font-weight:700;"
+                  data-bs-dismiss="modal">
+            Бекор қилиш
+          </button>
+          <button type="submit" class="btn-checkout"
+                  style="flex:2;width:auto;padding:11px 24px;font-size:.88rem;">
+            <i class="fas fa-check"></i> Тасдиқлаш
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════ BOTTOM NAV (mobile) ════════ -->
+<nav class="bottom-nav d-md-none" aria-label="Асосий меню">
+  <button class="bottom-nav__item active" id="navBtnHome"
+          onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <i class="fas fa-house"></i>
+    <span>Бош</span>
+  </button>
+  <button class="bottom-nav__item"
+          onclick="document.getElementById('menu')?.scrollIntoView({behavior:'smooth'})">
+    <i class="fas fa-utensils"></i>
+    <span>Меню</span>
+  </button>
+  <button class="bottom-nav__item"
+          data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
+    <div class="bottom-nav__cart-wrap">
+      <i class="fas fa-shopping-basket"></i>
+      <span class="bottom-nav__badge" id="cartCountBottom">0</span>
+    </div>
+    <span>Саватча</span>
+  </button>
+  <button class="bottom-nav__item"
+          onclick="document.getElementById('contact')?.scrollIntoView({behavior:'smooth'})">
+    <i class="fas fa-circle-info"></i>
+    <span>Ҳақимизда</span>
+  </button>
+</nav>
+
+
+<!-- ════════ FOOTER ════════ -->
+<footer class="site-footer" id="contact">
+  <div class="footer-inner">
+    <div>
+      <p class="footer-brand">🌸 Флорелла Кафе</p>
+      <p class="footer-tagline">Ҳар бир таом — бир ҳис</p>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <a href="#" style="width:36px;height:36px;border-radius:var(--r-xs);
+                           background:rgba(255,255,255,.08);display:flex;
+                           align-items:center;justify-content:center;
+                           color:rgba(255,255,255,.6);font-size:.95rem;
+                           transition:background .2s;"
+           onmouseover="this.style.background='var(--primary)';this.style.color='#fff'"
+           onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.6)'">
+          <i class="fab fa-instagram"></i></a>
+        <a href="#" style="width:36px;height:36px;border-radius:var(--r-xs);
+                           background:rgba(255,255,255,.08);display:flex;
+                           align-items:center;justify-content:center;
+                           color:rgba(255,255,255,.6);font-size:.95rem;
+                           transition:background .2s;"
+           onmouseover="this.style.background='var(--primary)';this.style.color='#fff'"
+           onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.6)'">
+          <i class="fab fa-telegram"></i></a>
+      </div>
+    </div>
+    <div class="footer-section">
+      <h6>Иш вақти</h6>
+      <p><i class="far fa-clock"></i>Дш–Шб: 10:00 – 23:00</p>
+      <p><i class="far fa-clock"></i>Якшанба: 10:00 – 22:00</p>
+    </div>
+    <div class="footer-section">
+      <h6>Алоқа</h6>
+      <p><i class="fas fa-phone"></i>+998 90 000 00 00</p>
+      <p><i class="fab fa-instagram"></i>@florella.cafe</p>
+      <p><i class="fas fa-location-dot"></i>Тошкент шаҳри</p>
+    </div>
+  </div>
+  <hr class="footer-divider">
+  <p class="footer-copy">© 2026 Флорелла Кафе. Барча ҳуқуқлар ҳимояланган.</p>
+</footer>
+
+
+<!-- ════════ LOCATION MODAL ════════ -->
+<div class="loc-modal" id="locModal" role="dialog" aria-modal="true">
+  <div class="loc-modal__backdrop" id="locBackdrop"></div>
+  <div class="loc-modal__card">
+    <div class="loc-modal__handle"></div>
+
+    <div class="loc-modal__brand">
+      <div class="brand-ring">🌸</div>
+      <h2>Флорелла Кафега хуш келибсиз!</h2>
+      <p>Буюртмани қандай олмоқчисиз?</p>
+    </div>
+
+    <!-- Choice buttons -->
+    <div class="loc-choices">
+      <button class="loc-choice" id="choiceDelivery" onclick="selectDelivery()">
+        <div class="loc-choice__icon">
+          <i class="fas fa-motorcycle"></i>
+        </div>
+        <span class="loc-choice__label">Йетказиб бериш</span>
+        <span class="loc-choice__sub">Манзилингизга юборамиз</span>
+      </button>
+      <button class="loc-choice" id="choicePickup" onclick="selectPickup()">
+        <div class="loc-choice__icon">
+          <i class="fas fa-store"></i>
+        </div>
+        <span class="loc-choice__label">Ўзингиз оласиз</span>
+        <span class="loc-choice__sub">Кафега келиб оласиз</span>
+      </button>
+    </div>
+
+    <!-- Delivery address panel -->
+    <div class="loc-addr-panel" id="locAddrPanel">
+      <button class="btn-gps" id="btnGetGPS">
+        <i class="fas fa-crosshairs"></i>
+        GPS орқали аниқлаш
+      </button>
+      <p class="gps-status" id="gpsStatus">📍 Манзил аниқланмоқда...</p>
+      <div class="loc-divider">ёки</div>
+      <input type="text" class="loc-addr-input" id="locAddrInput"
+             placeholder="Манзилни ёзинг (кўча, уй рақами)..."
+             onkeydown="if(event.key==='Enter') confirmAddress()">
+      <button class="btn-confirm-addr" onclick="confirmAddress()">
+        <i class="fas fa-check"></i> Тасдиқлаш
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ════════ SCRIPTS ════════ -->
+<script src="{% static 'vendor/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'js/cart.js' %}"></script>
+
+<script>
+/* ════ SCROLL LOCK — position:fixed approach (most reliable) ════ */
+var _scrollY = 0;
+function lockBody(){
+  _scrollY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = '-' + _scrollY + 'px';
+  document.body.style.width = '100%';
+  document.body.style.overflowY = 'scroll';
+}
+function unlockBody(){
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  document.body.style.overflowY = '';
+  window.scrollTo(0, _scrollY);
+}
+
+/* ════ NAV SCROLL ════ */
+(function(){
+  var nav = document.getElementById('mainNav');
+  var last = 0;
+  window.addEventListener('scroll', function(){
+    var y = window.scrollY;
+    if(y > 10) nav.classList.add('scrolled');
+    else { nav.classList.remove('scrolled','hidden'); }
+    if(y > 250){
+      if(y > last + 8) nav.classList.add('hidden');
+      else if(y < last - 8) nav.classList.remove('hidden');
+    }
+    last = y;
+  }, {passive:true});
+})();
+
+/* ════ BOTTOM NAV ACTIVE ════ */
+(function(){
+  var btns = document.querySelectorAll('.bottom-nav__item');
+  var menuSec = document.getElementById('menu');
+  var aboutSec = document.getElementById('contact');
+  if(!menuSec) return;
+  window.addEventListener('scroll', function(){
+    var y = window.scrollY;
+    var mTop = menuSec.getBoundingClientRect().top + y - 120;
+    var aTop = aboutSec ? aboutSec.getBoundingClientRect().top + y - 120 : 999999;
+    var idx = 0;
+    if(y >= mTop && y < aTop) idx = 1;
+    else if(y >= aTop) idx = 3;
+    btns.forEach(function(b,i){ b.classList.toggle('active', i===idx); });
+  }, {passive:true});
+})();
+
+/* ════ LOCATION FEATURE ════ */
+var LOC_MODE = 'fl_mode';
+var LOC_ADDR = 'fl_addr';
+
+function openLocModal(){
+  document.getElementById('locModal').classList.add('open');
+  lockBody();
+}
+function closeLocModal(){
+  document.getElementById('locModal').classList.remove('open');
+  unlockBody();
+}
+
+/* Backdrop click closes */
+document.getElementById('locBackdrop').addEventListener('click', function(){
+  var mode = localStorage.getItem(LOC_MODE);
+  if(mode) closeLocModal(); /* only close if already set */
+});
+
+function updateNavUI(mode, addr){
+  var iconEl   = document.getElementById('navLocIcon');
+  var textEl   = document.getElementById('navLocText');
+  var pillIcon = document.getElementById('deliveryPillIcon');
+  var pillText = document.getElementById('deliveryPillText');
+  if(mode === 'pickup'){
+    if(iconEl) iconEl.className = 'fas fa-store loc-icon';
+    if(textEl) textEl.textContent = 'Ўзингиз оласиз';
+    if(pillIcon) pillIcon.className = 'fas fa-store';
+    if(pillText) pillText.textContent = 'Ўзингиз оласиз';
+  } else {
+    if(iconEl) iconEl.className = 'fas fa-motorcycle loc-icon';
+    if(textEl) textEl.textContent = addr || 'Манзил киритинг';
+    if(pillIcon) pillIcon.className = 'fas fa-motorcycle';
+    if(pillText) pillText.textContent = addr || 'Манзил киритинг';
+  }
+}
+
+function selectDelivery(){
+  document.getElementById('choiceDelivery').classList.add('selected');
+  document.getElementById('choicePickup').classList.remove('selected');
+  document.getElementById('locAddrPanel').classList.add('show');
+  document.getElementById('locAddrInput').focus();
+}
+
+function selectPickup(){
+  document.getElementById('choicePickup').classList.add('selected');
+  document.getElementById('choiceDelivery').classList.remove('selected');
+  document.getElementById('locAddrPanel').classList.remove('show');
+  localStorage.setItem(LOC_MODE, 'pickup');
+  localStorage.removeItem(LOC_ADDR);
+  updateNavUI('pickup', '');
+  closeLocModal();
+}
+
+function confirmAddress(){
+  var val = (document.getElementById('locAddrInput').value || '').trim();
+  if(!val){ document.getElementById('locAddrInput').focus(); return; }
+  localStorage.setItem(LOC_MODE, 'delivery');
+  localStorage.setItem(LOC_ADDR, val);
+  updateNavUI('delivery', val);
+  closeLocModal();
+}
+
+/* GPS Button */
+document.getElementById('btnGetGPS').addEventListener('click', function(){
+  var btn = this;
+  var status = document.getElementById('gpsStatus');
+  if(!navigator.geolocation){
+    status.textContent = '❌ Браузер GPS ни қўллаб-қувватламайди';
+    status.classList.add('show'); return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Аниқланмоқда...';
+  status.classList.add('show');
+  status.textContent = '📍 GPS сигнал қабул қилинмоқда...';
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      var lat = pos.coords.latitude, lon = pos.coords.longitude;
+      status.textContent = '🔍 Манзил аниқланмоқда...';
+      fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lon+'&accept-language=uz', {
+        headers:{'User-Agent':'FlorellaCafe/1.0'}
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var a = data.address || {};
+        var parts = [];
+        if(a.road || a.pedestrian) parts.push(a.road || a.pedestrian);
+        if(a.suburb || a.neighbourhood) parts.push(a.suburb || a.neighbourhood);
+        if(a.city || a.town || a.village) parts.push(a.city || a.town || a.village);
+        var addr = parts.length ? parts.join(', ') : (data.display_name || 'Аниқланди');
+        /* Shorten if too long */
+        if(addr.length > 60) addr = addr.substring(0,57) + '...';
+        localStorage.setItem(LOC_MODE, 'delivery');
+        localStorage.setItem(LOC_ADDR, addr);
+        updateNavUI('delivery', addr);
+        closeLocModal();
+      })
+      .catch(function(){
+        /* Nominatim failed — show coords */
+        var addr = 'GPS: ' + lat.toFixed(4) + ', ' + lon.toFixed(4);
+        localStorage.setItem(LOC_MODE, 'delivery');
+        localStorage.setItem(LOC_ADDR, addr);
+        updateNavUI('delivery', addr);
+        closeLocModal();
+      });
+    },
+    function(err){
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-crosshairs"></i> GPS орқали аниқлаш';
+      var msg = err.code === 1 ? '🚫 GPS рухсати берилмади' :
+                err.code === 2 ? '❌ GPS сигнали топилмади' :
+                                 '⏱ Вақт тугади, қайта уриниб кўринг';
+      status.textContent = msg;
+    },
+    {timeout:12000, maximumAge:60000}
+  );
+});
+
+/* Init on load */
+(function(){
+  var mode = localStorage.getItem(LOC_MODE);
+  var addr = localStorage.getItem(LOC_ADDR);
+  if(mode){
+    updateNavUI(mode, addr);
+  } else {
+    /* Show location modal after short delay on first visit */
+    setTimeout(function(){ openLocModal(); }, 900);
+  }
+})();
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html class="light" lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#e31e24">
+  <title>{% block title %}Florella Cafe{% endblock %}</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23e31e24'/><text y='.9em' font-size='68' x='50%' text-anchor='middle' dominant-baseline='hanging' font-family='sans-serif' font-weight='bold' fill='white'>FC</text></svg>">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS (built) -->
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/tailwind.css' %}?v=2">
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen pb-20" style="background:#f9f9fe;color:#1a1c1f;">
+
+<!-- ═══ TOP APP BAR ═══ -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-4 h-16"
+        style="background:#f9f9fe;box-shadow:0 1px 0 #e7bdb8;">
+  <a href="{% url 'menu:menu_list' %}" class="flex items-center gap-3 no-underline">
+    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+         style="background:#e31e24;">
+      <span class="text-white font-bold text-sm">FC</span>
+    </div>
+    <span class="font-bold text-lg" style="color:#1a1c1f;">Florella Cafe</span>
+  </a>
+  <button id="searchToggleBtn"
+          class="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition-transform"
+          style="background:#ededf2;">
+    <span class="material-symbols-outlined" style="color:#ba0013;font-size:22px;">search</span>
+  </button>
+</header>
+
+<!-- ═══ SEARCH OVERLAY ═══ -->
+<div id="searchOverlay"
+     class="fixed top-0 left-0 right-0 z-[55] flex items-center gap-3 px-4 h-16"
+     style="background:#f9f9fe;box-shadow:0 1px 0 #e7bdb8;transform:translateY(-100%);transition:transform .2s ease;">
+  <button id="searchCloseBtn" class="w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0">
+    <span class="material-symbols-outlined" style="color:#5d3f3c;">arrow_back</span>
+  </button>
+  <input id="searchInput" type="text" placeholder="Таом номи..."
+         class="flex-1 rounded-2xl px-4 py-2 text-sm border-2 border-transparent"
+         style="background:#ededf2;color:#1a1c1f;border-color:transparent;">
+</div>
+
+<!-- ═══ ALERTS ═══ -->
+{% if messages %}
+<div class="fixed top-20 left-0 right-0 z-[60] px-4 space-y-2 pointer-events-none">
+  {% for message in messages %}
+  <div class="flex items-center gap-3 p-3.5 rounded-2xl pointer-events-auto"
+       style="background:#fff;box-shadow:0 4px 16px rgba(0,0,0,.1);">
+    <span class="material-symbols-outlined flex-shrink-0" style="color:#e31e24;">check_circle</span>
+    <span class="text-sm font-semibold" style="color:#1a1c1f;">{{ message }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ═══ PAGE CONTENT ═══ -->
+{% block content %}{% endblock %}
+
+<!-- ═══ FAB CART ═══ -->
+<button onclick="openCartDrawer()"
+        class="fixed right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+        style="bottom:84px;background:#e31e24;box-shadow:0 4px 20px rgba(227,30,36,.4);">
+  <span class="material-symbols-outlined text-white" style="font-variation-settings:'FILL' 1;">shopping_basket</span>
+  <div id="cartBadge"
+       class="absolute -top-1 -right-1 flex items-center justify-center rounded-full border-2 text-[10px] font-extrabold hidden"
+       style="min-width:20px;height:20px;background:#fcaf19;color:#281800;border-color:#f9f9fe;padding:0 4px;">0</div>
+</button>
+
+<!-- ═══ BOTTOM NAV ═══ -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center"
+     style="height:68px;background:#f9f9fe;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.06);">
+  <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-4"
+          style="color:#e31e24;" id="navHome"
+          onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <span class="material-symbols-outlined" style="font-size:24px;font-variation-settings:'FILL' 1,'wght' 400;">home</span>
+    <span style="font-size:11px;font-weight:600;">Бош</span>
+  </button>
+  <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-4"
+          style="color:#5d3f3c;" id="navMenu"
+          onclick="document.getElementById('menu')?.scrollIntoView({behavior:'smooth'})">
+    <span class="material-symbols-outlined" style="font-size:24px;">restaurant_menu</span>
+    <span style="font-size:11px;font-weight:600;">Меню</span>
+  </button>
+  <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-4"
+          style="color:#5d3f3c;" id="navCart"
+          onclick="openCartDrawer()">
+    <span class="relative">
+      <span class="material-symbols-outlined" style="font-size:24px;">shopping_basket</span>
+      <span id="cartCountBottom"
+            class="absolute flex items-center justify-center rounded-full font-extrabold border"
+            style="top:-6px;right:-10px;min-width:16px;height:16px;font-size:9px;background:#e31e24;color:#fff;border-color:#f9f9fe;padding:0 3px;">0</span>
+    </span>
+    <span style="font-size:11px;font-weight:600;">Савад</span>
+  </button>
+  <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-4"
+          style="color:#5d3f3c;" id="navAbout"
+          onclick="document.getElementById('about')?.scrollIntoView({behavior:'smooth'})">
+    <span class="material-symbols-outlined" style="font-size:24px;">info</span>
+    <span style="font-size:11px;font-weight:600;">Ҳақимизда</span>
+  </button>
+</nav>
+
+<!-- ═══ CART SUMMARY BAR (pastda) ═══ -->
+<div id="cartBar"
+     style="position:fixed;bottom:68px;left:0;right:0;z-index:55;
+            padding:0 12px 8px;
+            transform:translateY(120%);opacity:0;
+            transition:transform .3s cubic-bezier(.33,1,.68,1),opacity .3s ease;
+            pointer-events:none;">
+  <div onclick="openCartDrawer()"
+       style="display:flex;align-items:center;gap:12px;
+              background:#e31e24;color:#fff;
+              padding:12px 16px;border-radius:20px;cursor:pointer;
+              box-shadow:0 4px 20px rgba(227,30,36,.4);">
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+      <span class="material-symbols-outlined" style="font-size:22px;font-variation-settings:'FILL' 1;flex-shrink:0;">shopping_basket</span>
+      <div style="min-width:0;">
+        <p id="cartBarCount" style="font-size:12px;font-weight:600;opacity:.85;line-height:1.2;">0 та махсулот</p>
+        <p id="cartBarTotal" style="font-size:16px;font-weight:900;line-height:1.2;">0 сўм</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.2);
+                padding:8px 14px;border-radius:12px;flex-shrink:0;">
+      <span style="font-size:13px;font-weight:700;">Саватча</span>
+      <span class="material-symbols-outlined" style="font-size:18px;">chevron_right</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CART DRAWER (ong tarafdan) ═══ -->
+<div id="cartDrawer" class="fixed inset-0 z-[60] pointer-events-none">
+  <div id="cartBackdrop" onclick="closeCartDrawer()"
+       class="absolute inset-0 transition-[background-color] duration-300"
+       style="background:transparent;"></div>
+  <div id="cartPanel" class="absolute top-0 right-0 bottom-0 flex flex-col"
+       style="width:100%;max-width:420px;background:#f9f9fe;
+              border-radius:20px 0 0 20px;
+              transform:translateX(100%);
+              transition:transform .32s cubic-bezier(.32,0,.67,0);
+              box-shadow:-8px 0 32px rgba(0,0,0,.12);">
+    <!-- Header -->
+    <div class="flex items-center justify-between flex-shrink-0"
+         style="padding:20px 16px 16px;border-bottom:1px solid #e7bdb8;">
+      <div class="flex items-center gap-2">
+        <button onclick="closeCartDrawer()"
+                class="w-9 h-9 flex items-center justify-center rounded-full active:scale-90 transition-transform"
+                style="background:#ededf2;">
+          <span class="material-symbols-outlined" style="font-size:20px;">arrow_back</span>
+        </button>
+        <h2 style="font-size:17px;font-weight:800;color:#1a1c1f;">Саватча</h2>
+      </div>
+      <span id="cartCountBadge"
+            style="background:#e31e24;color:#fff;font-size:12px;font-weight:700;
+                   padding:3px 10px;border-radius:999px;">0 та</span>
+    </div>
+    <!-- Items -->
+    <div id="cartItems" class="flex-1 overflow-y-auto" style="padding:8px 16px;min-height:100px;"></div>
+    <!-- Footer -->
+    <div class="flex-shrink-0" style="padding:14px 16px 28px;border-top:1px solid #e7bdb8;">
+      <div class="flex items-center justify-between" style="margin-bottom:12px;">
+        <span style="font-size:14px;font-weight:600;color:#5c5b5b;">Жами тўлов</span>
+        <span id="cartTotal" style="font-size:20px;font-weight:900;color:#ba0013;">0 сўм</span>
+      </div>
+      <button id="checkoutBtn" onclick="openOrderModal()"
+              class="w-full flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              style="background:#e31e24;color:#fff;padding:15px;border-radius:16px;
+                     border:none;cursor:pointer;font-size:15px;font-weight:700;opacity:1;"
+              disabled>
+        <span class="material-symbols-outlined" style="font-size:20px;">receipt_long</span>
+        Буюртма бериш
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ORDER MODAL ═══ -->
+<div id="orderModal" class="fixed inset-0 z-[70] pointer-events-none">
+  <div id="orderBackdrop" onclick="closeOrderModal()"
+       class="absolute inset-0 transition-[background-color] duration-300" style="background:transparent;"></div>
+  <div id="orderPanel"
+       class="absolute bottom-0 left-0 right-0 overflow-y-auto"
+       style="background:#f9f9fe;border-radius:24px 24px 0 0;max-height:94vh;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,0,.67,0);">
+    <div class="flex justify-center pt-3 pb-2">
+      <div class="w-10 h-1 rounded-full" style="background:#e7bdb8;"></div>
+    </div>
+    <div class="flex items-center justify-between px-4 pb-4" style="border-bottom:1px solid #e7bdb8;">
+      <h2 class="font-bold flex items-center gap-2" style="font-size:17px;color:#1a1c1f;">
+        <span class="material-symbols-outlined" style="color:#e31e24;font-size:20px;">receipt_long</span>
+        Буюртма маълумотлари
+      </h2>
+      <button onclick="closeOrderModal()"
+              class="w-8 h-8 flex items-center justify-center rounded-full active:scale-90"
+              style="background:#ededf2;">
+        <span class="material-symbols-outlined" style="font-size:20px;">close</span>
+      </button>
+    </div>
+    <form method="POST" action="{% url 'orders:order_create' %}" class="p-4 space-y-4" style="padding-bottom:32px;">
+      {% csrf_token %}
+      <div>
+        <label class="block text-xs font-semibold mb-1.5" style="color:#5c5b5b;">Исмингиз <span style="color:#e31e24;">*</span></label>
+        <input type="text" name="customer_name" required placeholder="Исм Фамилия"
+               class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+               style="background:#ededf2;color:#1a1c1f;">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold mb-1.5" style="color:#5c5b5b;">Телефон <span style="color:#e31e24;">*</span></label>
+        <input type="tel" name="customer_phone" required placeholder="+998 90 123 45 67"
+               class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+               style="background:#ededf2;color:#1a1c1f;">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold mb-1.5" style="color:#5c5b5b;">Стол <span style="font-weight:400;opacity:.6;">(ихтиёрий)</span></label>
+        <input type="number" name="table_number" placeholder="№" min="1"
+               class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+               style="background:#ededf2;color:#1a1c1f;">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold mb-1.5" style="color:#5c5b5b;">Изоҳ <span style="font-weight:400;opacity:.6;">(ихтиёрий)</span></label>
+        <textarea name="note" rows="2" placeholder="Қўшимча хоҳишлар..."
+                  class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent resize-none"
+                  style="background:#ededf2;color:#1a1c1f;"></textarea>
+      </div>
+      <input type="hidden" name="cart" id="cartDataInput">
+      <div id="modalOrderSummary" class="rounded-2xl p-4 space-y-1" style="background:#ededf2;"></div>
+      <div class="flex gap-3">
+        <button type="button" onclick="closeOrderModal()"
+                class="flex-1 font-semibold text-sm active:scale-[0.98] transition-transform"
+                style="background:#ededf2;color:#1a1c1f;padding:14px;border-radius:16px;border:none;cursor:pointer;">
+          Бекор қилиш
+        </button>
+        <button type="submit"
+                class="flex items-center justify-center gap-2 font-bold text-sm active:scale-[0.98] transition-transform"
+                style="flex:2;background:#e31e24;color:#fff;padding:14px;border-radius:16px;border:none;cursor:pointer;">
+          <span class="material-symbols-outlined" style="font-size:18px;">check</span>
+          Тасдиқлаш
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script src="{% static 'js/cart.js' %}?v=2"></script>
+<script>
+/* ── Cart Drawer ── */
+function openCartDrawer(){
+  var d=document.getElementById('cartDrawer'),p=document.getElementById('cartPanel'),b=document.getElementById('cartBackdrop');
+  d.classList.remove('pointer-events-none');
+  b.style.background='rgba(0,0,0,.45)';
+  p.style.transform='translateX(0)';
+  document.body.style.overflow='hidden';
+}
+function closeCartDrawer(){
+  var d=document.getElementById('cartDrawer'),p=document.getElementById('cartPanel'),b=document.getElementById('cartBackdrop');
+  b.style.background='transparent';
+  p.style.transform='translateX(100%)';
+  setTimeout(function(){d.classList.add('pointer-events-none');},320);
+  document.body.style.overflow='';
+}
+function openOrderModal(){
+  closeCartDrawer();
+  setTimeout(function(){
+    var m=document.getElementById('orderModal'),p=document.getElementById('orderPanel'),b=document.getElementById('orderBackdrop');
+    m.classList.remove('pointer-events-none');
+    b.style.background='rgba(0,0,0,.5)';
+    p.style.transform='translateY(0)';
+    document.body.style.overflow='hidden';
+  },320);
+}
+function closeOrderModal(){
+  var m=document.getElementById('orderModal'),p=document.getElementById('orderPanel'),b=document.getElementById('orderBackdrop');
+  b.style.background='transparent';
+  p.style.transform='';
+  setTimeout(function(){m.classList.add('pointer-events-none');},300);
+  document.body.style.overflow='';
+}
+
+/* ── Search overlay ── */
+document.getElementById('searchToggleBtn').addEventListener('click',function(){
+  document.getElementById('searchOverlay').style.transform='translateY(0)';
+  document.getElementById('searchInput').focus();
+});
+document.getElementById('searchCloseBtn').addEventListener('click',function(){
+  document.getElementById('searchOverlay').style.transform='';
+});
+
+/* ── Cart badge + bar sync ── */
+var _origUpdateCartUI=window.updateCartUI;
+window.updateCartUI=function(){
+  if(_origUpdateCartUI) _origUpdateCartUI();
+  var count = cart.reduce(function(s,i){return s+i.quantity;},0);
+  var total = cart.reduce(function(s,i){return s+i.price*i.quantity;},0);
+  var fmt2  = function(n){ return new Intl.NumberFormat('uz-UZ').format(Math.round(n))+' сўм'; };
+
+  /* FAB badge */
+  var badge=document.getElementById('cartBadge');
+  if(badge){ badge.textContent=count; count>0?badge.classList.remove('hidden'):badge.classList.add('hidden'); }
+
+  /* Cart drawer badge */
+  var cb=document.getElementById('cartCountBadge');
+  if(cb) cb.textContent=count+' та';
+
+  /* Cart summary bar */
+  var bar       = document.getElementById('cartBar');
+  var barCount  = document.getElementById('cartBarCount');
+  var barTotal  = document.getElementById('cartBarTotal');
+  if(bar){
+    if(count>0){
+      if(barCount) barCount.textContent = count+' та махсулот';
+      if(barTotal) barTotal.textContent = fmt2(total);
+      bar.style.transform   = 'translateY(0)';
+      bar.style.opacity     = '1';
+      bar.style.pointerEvents = 'auto';
+    } else {
+      bar.style.transform   = 'translateY(120%)';
+      bar.style.opacity     = '0';
+      bar.style.pointerEvents = 'none';
+    }
+  }
+};
+
+/* ── Checkout button disabled style ── */
+document.getElementById('checkoutBtn').addEventListener('DOMSubtreeModified',function(){});
+var _chkObs=new MutationObserver(function(){
+  var btn=document.getElementById('checkoutBtn');
+  if(btn) btn.style.opacity=btn.disabled?'0.4':'1';
+});
+_chkObs.observe(document.getElementById('checkoutBtn'),{attributes:true,attributeFilter:['disabled']});
+
+/* ── Bottom nav active ── */
+(function(){
+  var btns=document.querySelectorAll('.bnav-btn');
+  function setActive(idx){
+    btns.forEach(function(b,i){
+      var active=i===idx;
+      b.style.color=active?'#e31e24':'#5d3f3c';
+      var ic=b.querySelector('.material-symbols-outlined');
+      if(ic) ic.style.fontVariationSettings=active?"'FILL' 1,'wght' 400":"'FILL' 0,'wght' 400";
+    });
+  }
+  btns.forEach(function(btn,idx){
+    btn.addEventListener('click',function(){ setActive(idx); });
+  });
+  /* Auto-highlight */
+  var menuSec=document.getElementById('menu'),aboutSec=document.getElementById('about');
+  if(!menuSec) return;
+  window.addEventListener('scroll',function(){
+    var y=window.scrollY;
+    var mTop=menuSec.getBoundingClientRect().top+y-100;
+    var aTop=aboutSec?aboutSec.getBoundingClientRect().top+y-100:Infinity;
+    var idx=0;
+    if(y>=mTop&&y<aTop) idx=1;
+    else if(y>=aTop) idx=3;
+    setActive(idx);
+  },{passive:true});
+})();
+
+/* ── Swipe to close ── */
+(function(){
+  /* Cart panel — ong tarafga suring (swipe right) */
+  var cp=document.getElementById('cartPanel');
+  if(cp){
+    var sx=0;
+    cp.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;},{passive:true});
+    cp.addEventListener('touchend',function(e){
+      if(e.changedTouches[0].clientX-sx>80) closeCartDrawer();
+    },{passive:true});
+  }
+  /* Order panel — pastga suring */
+  var op=document.getElementById('orderPanel');
+  if(op){
+    var sy2=0;
+    op.addEventListener('touchstart',function(e){sy2=e.touches[0].clientY;},{passive:true});
+    op.addEventListener('touchend',function(e){
+      if(e.changedTouches[0].clientY-sy2>80) closeOrderModal();
+    },{passive:true});
+  }
+})();
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

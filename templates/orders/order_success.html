@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Буюртма қабул қилинди — Флорелла Кафе{% endblock %}
+
+{% block content %}
+<div class="success-page">
+  <div class="success-card">
+
+    <!-- Icon -->
+    <div class="text-center" style="margin-bottom:20px;">
+      <div class="success-icon">✅</div>
+      <h2 style="font-family:'Nunito',sans-serif;font-size:1.5rem;font-weight:900;color:var(--text);margin-bottom:6px;">
+        Буюртма қабул қилинди!
+      </h2>
+      <p style="font-size:.85rem;color:var(--text-3);">
+        Буюртма рақами:
+        <strong style="color:var(--primary);font-size:1rem;">#{{ order.pk }}</strong>
+      </p>
+    </div>
+
+    <!-- Details -->
+    <div style="margin-bottom:18px;">
+      <div class="order-detail-row">
+        <span>Мижоз</span>
+        <span>{{ order.customer_name }}</span>
+      </div>
+      <div class="order-detail-row">
+        <span>Телефон</span>
+        <span>{{ order.customer_phone }}</span>
+      </div>
+      {% if order.table_number %}
+      <div class="order-detail-row">
+        <span>Стол</span>
+        <span>#{{ order.table_number }}</span>
+      </div>
+      {% endif %}
+      <div class="order-detail-row">
+        <span>Ҳолат</span>
+        <span style="color:var(--primary);font-weight:800;">{{ order.get_status_display }}</span>
+      </div>
+    </div>
+
+    <!-- Items -->
+    <div style="background:var(--bg);border-radius:var(--r-sm);padding:14px;
+                margin-bottom:18px;border:1px solid var(--border);">
+      <p style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;
+                color:var(--text);margin-bottom:10px;">Буюртма таркиби</p>
+      {% for item in order.items.all %}
+      <div class="order-detail-row">
+        <span>{{ item.menu_item.name }} × {{ item.quantity }}</span>
+        <span style="color:var(--primary);font-weight:700;">{{ item.subtotal|floatformat:0 }} сўм</span>
+      </div>
+      {% endfor %}
+      <div class="order-detail-row"
+           style="border-top:2px solid var(--border);margin-top:6px;padding-top:10px;">
+        <span style="font-family:'Nunito',sans-serif;font-weight:800;color:var(--text);">Жами тўлов</span>
+        <span style="color:var(--primary);font-size:1rem;font-weight:900;">{{ order.total_price|floatformat:0 }} сўм</span>
+      </div>
+    </div>
+
+    {% if order.note %}
+    <p style="font-size:.82rem;color:var(--text-3);margin-bottom:16px;
+              background:var(--bg);padding:10px 14px;border-radius:var(--r-xs);">
+      <strong style="color:var(--text-2);">Изоҳ:</strong> {{ order.note }}
+    </p>
+    {% endif %}
+
+    <a href="{% url 'menu:menu_list' %}" class="btn-checkout"
+       style="text-align:center;display:flex;text-decoration:none;">
+      <i class="fas fa-arrow-left"></i>
+      Менюга қайтиш
+    </a>
+
+  </div>
+</div>
+{% endblock %}

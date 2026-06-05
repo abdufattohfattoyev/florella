@@ -1,0 +1,878 @@
+{% extends 'base.html' %}
+{% block title %}Меню — Florella Cafe{% endblock %}
+
+{% block extra_head %}
+<style>
+/* Hero slider */
+.hero-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.1s ease;}
+.hero-slide.active{opacity:1;z-index:1;}
+.hero-slide.leaving{opacity:0;z-index:2;}
+.hero-dot.active{width:20px;background:#fff;border-radius:999px;}
+/* Size btn */
+.size-btn.active{border-color:#e31e24 !important;background:#fff0f1;}
+/* Product card hover */
+@media(hover:hover){.product-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(227,30,36,.1);}}
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="pt-16 pb-6">
+
+  <!-- ════ DELIVERY BAR ════ -->
+  <div id="deliveryBar" class="flex items-center justify-between px-4 py-3"
+       style="border-bottom:1px solid rgba(231,189,184,.35);">
+    <div>
+      <p style="font-size:11px;font-weight:600;color:#5c5b5b;">Етказиб бериш</p>
+      <button id="locationBtn" onclick="requestLocation()"
+              class="flex items-center gap-1 mt-0.5 active:opacity-70 transition-opacity">
+        <span id="locationText" style="font-size:14px;font-weight:600;color:#1a1c1f;">
+          Манзилни аниқлаш…
+        </span>
+        <span id="locationIcon" class="material-symbols-outlined"
+              style="font-size:16px;color:#1a1c1f;">expand_more</span>
+      </button>
+    </div>
+    <div class="flex items-center gap-1.5 rounded-xl px-3 py-2" style="background:#ededf2;">
+      <span style="font-size:13px;font-weight:600;color:#1a1c1f;">Доставка</span>
+      <span class="material-symbols-outlined" style="font-size:16px;color:#5d3f3c;">expand_more</span>
+    </div>
+  </div>
+
+  <!-- ════ HERO SLIDER / PROMO ════ -->
+  <div class="px-4 pt-4 pb-1">
+    {% if hero_items %}
+    <div class="relative w-full overflow-hidden" style="aspect-ratio:21/9;border-radius:16px;">
+      <div id="heroSlider" style="position:relative;width:100%;height:100%;background:#111;">
+        {% for item in hero_items %}
+        <div class="hero-slide {% if forloop.first %}active{% endif %}"
+             style="background-image:url('{{ item.image.url }}');" data-idx="{{ forloop.counter0 }}">
+          <div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.6) 0%,rgba(0,0,0,.1) 100%);
+                      display:flex;flex-direction:column;justify-content:flex-end;padding:20px;">
+            <span style="display:inline-block;background:#e31e24;color:#fff;font-size:10px;font-weight:700;
+                         text-transform:uppercase;padding:3px 10px;border-radius:8px;margin-bottom:6px;align-self:flex-start;">{{ item.category.name }}</span>
+            <h2 style="color:#fff;font-weight:800;font-size:17px;line-height:1.25;margin-bottom:8px;">{{ item.name }}</h2>
+            <div style="display:flex;align-items:center;gap:16px;">
+              <button class="btn-add"
+                      style="background:#fff;color:#1a1c1f;padding:8px 18px;border-radius:999px;border:none;
+                             font-size:13px;font-weight:700;cursor:pointer;"
+                      data-id="{{ item.id }}" data-name="{{ item.name }}"
+                      data-price="{{ item.price|floatformat:0 }}" data-desc="{{ item.description }}"
+                      data-image="{{ item.image.url }}" data-category="{{ item.category.slug }}">
+                Буюртма бериш
+              </button>
+              <span style="color:#fff;font-weight:700;font-size:15px;">{{ item.price|floatformat:0 }} сўм</span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        <div style="position:absolute;bottom:12px;right:16px;display:flex;gap:6px;z-index:10;">
+          {% for item in hero_items %}
+          <button class="hero-dot {% if forloop.first %}active{% endif %}"
+                  style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.5);border:none;cursor:pointer;padding:0;transition:all .3s;"
+                  data-idx="{{ forloop.counter0 }}"></button>
+          {% endfor %}
+        </div>
+        <div id="heroCounter"
+             style="position:absolute;bottom:12px;left:16px;z-index:10;font-size:11px;font-weight:700;
+                    color:rgba(255,255,255,.75);background:rgba(0,0,0,.3);border-radius:999px;
+                    padding:3px 10px;backdrop-filter:blur(4px);">1 / {{ hero_items|length }}</div>
+      </div>
+    </div>
+    {% else %}
+    <div class="relative overflow-hidden flex items-center"
+         style="background:linear-gradient(135deg,#fff0f1 0%,#ffd6d9 100%);border-radius:16px;min-height:130px;padding:20px;">
+      <div style="flex:1;">
+        <span style="display:inline-block;background:#e31e24;color:#fff;font-size:10px;font-weight:700;
+                     text-transform:uppercase;padding:3px 10px;border-radius:8px;margin-bottom:8px;">🎉 Акция</span>
+        <h3 style="color:#e31e24;font-weight:900;font-size:22px;line-height:1.1;margin-bottom:8px;">LOSOS BOKS</h3>
+        <p style="display:inline-block;background:#e31e24;color:#fff;font-size:12px;font-weight:700;
+                  padding:6px 14px;border-radius:10px;">2ta ICE TEA sovg'aga!</p>
+      </div>
+      <div style="font-size:56px;opacity:.4;flex-shrink:0;">🍣</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ════ CATEGORIES ════ -->
+  {% if categories %}
+  <section style="margin-top:20px;">
+    <div class="flex items-center justify-between px-4 mb-3">
+      <h3 style="font-size:16px;font-weight:700;color:#1a1c1f;">Категориялар</h3>
+    </div>
+    <div class="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
+      <!-- All -->
+      <div class="flex flex-col items-center gap-1.5 flex-none cursor-pointer" onclick="filterByCategory('all')" id="catCardAll">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center active:scale-95 transition-transform"
+             style="background:#e31e24;">
+          <span class="material-symbols-outlined text-white" style="font-size:22px;">tune</span>
+        </div>
+        <span style="font-size:11px;font-weight:600;color:#1a1c1f;text-align:center;">Барчаси</span>
+      </div>
+      {% for cat in categories %}
+      <div class="flex flex-col items-center gap-1.5 flex-none cursor-pointer"
+           onclick="filterByCategory('{{ cat.slug }}')" id="catCard-{{ cat.slug }}">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center active:scale-95 transition-transform overflow-hidden"
+             style="background:#ededf2;">
+          {% if cat.image %}
+            <img src="{{ cat.image.url }}" alt="{{ cat.name }}" class="w-full h-full object-cover">
+          {% else %}
+            <span style="font-size:24px;">
+              {% if cat.slug == 'rolllar' %}🍱
+              {% elif cat.slug == 'pizzalar' %}🍕
+              {% elif cat.slug == 'setlar' %}🎁
+              {% elif cat.slug == 'zakuskalar' %}🥢
+              {% elif cat.slug == 'ichimliklar' %}🍵
+              {% elif cat.slug == 'kokteyl' %}🍹
+              {% else %}🍴{% endif %}
+            </span>
+          {% endif %}
+        </div>
+        <span style="font-size:11px;font-weight:600;color:#1a1c1f;text-align:center;max-width:64px;line-height:1.3;">{{ cat.name }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ════ POPULAR — Хит сотувлар ════ -->
+  {% if popular_items %}
+  <section class="px-4" style="margin-top:24px;">
+    <h3 style="font-size:18px;font-weight:700;color:#1a1c1f;margin-bottom:12px;">Хит сотувлар</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      {% for item in popular_items %}
+      <div class="product-card flex flex-col overflow-hidden transition-all"
+           style="background:#fff;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,.04);cursor:pointer;">
+        <div class="relative" style="aspect-ratio:4/3;background:#f3f3f8;overflow:hidden;">
+          {% if item.image %}
+            <img src="{{ item.image.url }}" alt="{{ item.name }}"
+                 class="w-full h-full object-cover" loading="eager">
+          {% else %}
+            <div class="w-full h-full flex items-center justify-center" style="font-size:2.5rem;">
+              {% if item.category.slug == 'rolllar' %}🍱
+              {% elif item.category.slug == 'pizzalar' %}🍕
+              {% elif item.category.slug == 'setlar' %}🎁
+              {% else %}🍽️{% endif %}
+            </div>
+          {% endif %}
+          <div style="position:absolute;top:8px;left:8px;background:#e31e24;color:#fff;
+                      font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;">⭐ Хит</div>
+        </div>
+        <div class="flex flex-col flex-grow" style="padding:10px 10px 12px;gap:4px;">
+          <p style="font-size:14px;font-weight:700;color:#ba0013;">{{ item.price|floatformat:0 }} сўм</p>
+          <h4 class="line-clamp-2" style="font-size:13px;font-weight:700;color:#1a1c1f;line-height:1.35;">{{ item.name }}</h4>
+          {% if item.description %}
+          <p class="line-clamp-1" style="font-size:11px;color:#5c5b5b;">{{ item.description }}</p>
+          {% endif %}
+          <div style="margin-top:auto;padding-top:8px;">
+            <button class="btn-add w-full flex items-center justify-center gap-1.5"
+                    style="background:#e31e24;color:#fff;padding:9px 0;border-radius:12px;border:none;cursor:pointer;"
+                    data-id="{{ item.id }}" data-name="{{ item.name }}"
+                    data-price="{{ item.price|floatformat:0 }}" data-desc="{{ item.description }}"
+                    data-image="{% if item.image %}{{ item.image.url }}{% endif %}"
+                    data-category="{{ item.category.slug }}" aria-label="{{ item.name }}">
+              <span class="material-symbols-outlined" style="font-size:18px;">add</span>
+              <span style="font-size:13px;font-weight:700;">Қўшиш</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ════ FULL MENU ════ -->
+  <section id="menu" class="px-4" style="margin-top:20px;">
+    {% if categories %}
+      {% for cat in categories %}
+      <div class="menu-section" data-section="{{ cat.slug }}" style="margin-bottom:32px;">
+        <div class="flex items-center gap-2 mb-3">
+          <span style="font-size:20px;">
+            {% if cat.slug == 'rolllar' %}🍱
+            {% elif cat.slug == 'pizzalar' %}🍕
+            {% elif cat.slug == 'setlar' %}🎁
+            {% elif cat.slug == 'zakuskalar' %}🥢
+            {% elif cat.slug == 'ichimliklar' %}🍵
+            {% elif cat.slug == 'kokteyl' %}🍹
+            {% endif %}
+          </span>
+          <h3 style="font-size:16px;font-weight:700;color:#1a1c1f;">{{ cat.name }}</h3>
+        </div>
+        {% if cat.description %}
+        <p style="font-size:12px;color:#5c5b5b;margin-bottom:10px;margin-top:-6px;">{{ cat.description }}</p>
+        {% endif %}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          {% for item in cat.items.all %}
+          {% if item.is_available %}
+          <div class="product-card flex flex-col overflow-hidden transition-all"
+               style="background:#fff;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,.04);cursor:pointer;"
+               data-item-id="{{ item.id }}">
+            <div class="relative" style="aspect-ratio:4/3;background:#f3f3f8;overflow:hidden;">
+              {% if item.is_popular %}
+              <div style="position:absolute;top:8px;left:8px;background:#e31e24;color:#fff;
+                          font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;z-index:1;">⭐ Хит</div>
+              {% endif %}
+              {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.name }}" class="w-full h-full object-cover"
+                     loading="{% if forloop.counter <= 8 %}eager{% else %}lazy{% endif %}">
+              {% else %}
+                <div class="w-full h-full flex items-center justify-center" style="font-size:2.5rem;">
+                  {% if cat.slug == 'rolllar' %}🍱
+                  {% elif cat.slug == 'pizzalar' %}🍕
+                  {% elif cat.slug == 'setlar' %}🎁
+                  {% elif cat.slug == 'zakuskalar' %}🥢
+                  {% elif cat.slug == 'ichimliklar' %}🍵
+                  {% elif cat.slug == 'kokteyl' %}🍹
+                  {% else %}🍽️{% endif %}
+                </div>
+              {% endif %}
+            </div>
+            <div class="flex flex-col flex-grow" style="padding:10px 10px 12px;gap:4px;">
+              <p style="font-size:14px;font-weight:700;color:#ba0013;">{{ item.price|floatformat:0 }} сўм</p>
+              <h4 class="line-clamp-2" style="font-size:13px;font-weight:700;color:#1a1c1f;line-height:1.35;">{{ item.name }}</h4>
+              {% if item.description %}
+              <p class="line-clamp-1" style="font-size:11px;color:#5c5b5b;">{{ item.description }}</p>
+              {% endif %}
+              <div style="margin-top:auto;padding-top:8px;">
+                <button class="btn-add w-full flex items-center justify-center gap-1.5"
+                        id="btn-{{ item.id }}"
+                        style="background:#e31e24;color:#fff;padding:9px 0;border-radius:12px;border:none;cursor:pointer;"
+                        data-id="{{ item.id }}" data-name="{{ item.name }}"
+                        data-price="{{ item.price|floatformat:0 }}" data-desc="{{ item.description }}"
+                        data-image="{% if item.image %}{{ item.image.url }}{% endif %}"
+                        data-category="{{ cat.slug }}" aria-label="{{ item.name }}">
+                  <span class="material-symbols-outlined" style="font-size:18px;">add</span>
+                  <span style="font-size:13px;font-weight:700;">Қўшиш</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          {% empty %}
+          <p class="col-span-2" style="font-size:13px;color:#5c5b5b;text-align:center;padding:24px 0;">Яқинда қўшилади…</p>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div style="display:flex;flex-direction:column;align-items:center;padding:64px 20px;text-align:center;">
+      <span style="font-size:3rem;margin-bottom:12px;">🍽️</span>
+      <p style="font-weight:700;color:#5d3f3c;">Меню ҳали тўлдирилмаган</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- ════ ABOUT ════ -->
+  <section class="px-4" id="about" style="margin-top:32px;">
+    <h3 style="font-size:16px;font-weight:700;color:#1a1c1f;text-align:center;margin-bottom:16px;">🌸 Биз ҳақимизда</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+        <span style="font-size:22px;flex-shrink:0;margin-top:2px;">🌿</span>
+        <div><p style="font-weight:700;font-size:14px;color:#1a1c1f;margin-bottom:3px;">Табиий маҳсулотлар</p>
+             <p style="font-size:12px;color:#5c5b5b;">Фақат янги ва табиий ингредиентлар</p></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+        <span style="font-size:22px;flex-shrink:0;margin-top:2px;">🔪</span>
+        <div><p style="font-weight:700;font-size:14px;color:#1a1c1f;margin-bottom:3px;">Тажрибали ошпазлар</p>
+             <p style="font-size:12px;color:#5c5b5b;">Ҳар бир таом усталик ва меҳр билан тайёрланади</p></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+        <span style="font-size:22px;flex-shrink:0;margin-top:2px;">✨</span>
+        <div><p style="font-weight:700;font-size:14px;color:#1a1c1f;margin-bottom:3px;">Ноёб муҳит</p>
+             <p style="font-size:12px;color:#5c5b5b;">Японча ва итальянча услуб уйғунлашган атмосфера</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ FOOTER ════ -->
+  <footer class="mx-4" style="margin-top:32px;background:#1a1c1f;border-radius:20px;padding:24px;color:#fff;">
+    <p style="font-size:18px;font-weight:800;margin-bottom:4px;">🌸 Florella Cafe</p>
+    <p style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:20px;">Ҳар бир таом — бир ҳис</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <p style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Иш вақти</p>
+        <p style="font-size:12px;color:rgba(255,255,255,.65);margin-bottom:4px;">Дш–Шб: 10:00–23:00</p>
+        <p style="font-size:12px;color:rgba(255,255,255,.65);">Якшанба: 10:00–22:00</p>
+      </div>
+      <div>
+        <p style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Алоқа</p>
+        <p style="font-size:12px;color:rgba(255,255,255,.65);margin-bottom:4px;">+998 90 000 00 00</p>
+        <p style="font-size:12px;color:rgba(255,255,255,.65);">@florella.cafe</p>
+      </div>
+    </div>
+    <p style="font-size:11px;color:rgba(255,255,255,.2);margin-top:16px;">© 2026 Florella Cafe</p>
+  </footer>
+
+</main>
+
+<!-- ════ STICKY CATEGORY BAR ════ -->
+<div id="catStickyBar"
+     style="position:fixed;top:64px;left:0;right:0;z-index:45;
+            background:#f9f9fe;border-bottom:1px solid rgba(231,189,184,.45);
+            transform:translateY(-100%);opacity:0;
+            transition:transform .28s cubic-bezier(.33,1,.68,1),opacity .28s ease;
+            pointer-events:none;">
+  <div id="catStickyScroll" class="no-scrollbar"
+       style="display:flex;gap:8px;overflow-x:auto;padding:8px 16px;">
+    <button class="scat-pill" data-cat="all" onclick="filterByCategory('all')"
+            style="flex:none;padding:7px 16px;border-radius:999px;font-size:12px;font-weight:700;
+                   border:none;cursor:pointer;white-space:nowrap;
+                   background:#e31e24;color:#fff;">Барчаси</button>
+    {% for cat in categories %}
+    <button class="scat-pill" data-cat="{{ cat.slug }}" onclick="filterByCategory('{{ cat.slug }}')"
+            style="flex:none;padding:7px 16px;border-radius:999px;font-size:12px;font-weight:700;
+                   border:none;cursor:pointer;white-space:nowrap;
+                   background:#ededf2;color:#1a1c1f;">
+      {% if cat.slug == 'rolllar' %}🍱
+      {% elif cat.slug == 'pizzalar' %}🍕
+      {% elif cat.slug == 'setlar' %}🎁
+      {% elif cat.slug == 'zakuskalar' %}🥢
+      {% elif cat.slug == 'ichimliklar' %}🍵
+      {% elif cat.slug == 'kokteyl' %}🍹
+      {% endif %} {{ cat.name }}
+    </button>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ════ PIZZA SIZE MODAL (centered) ════ -->
+<div id="pizzaModal" class="fixed inset-0 z-[65] pointer-events-none flex items-center justify-center px-4">
+  <div id="pizzaBackdrop" onclick="closePizzaModal()"
+       class="absolute inset-0" style="background:transparent;transition:background .22s;"></div>
+  <div id="pizzaCard"
+       class="relative w-full overflow-hidden"
+       style="max-width:380px;background:#fff;border-radius:24px;
+              opacity:0;transform:scale(.92);
+              transition:opacity .22s ease,transform .22s ease;
+              max-height:88vh;overflow-y:auto;">
+    <!-- Image -->
+    <div class="relative" style="aspect-ratio:16/9;background:#f3f3f8;overflow:hidden;">
+      <img id="sheetImg" class="w-full h-full object-cover" src="" alt="" style="display:none;">
+      <div id="sheetImgPh" class="w-full h-full flex items-center justify-center" style="font-size:5rem;">🍕</div>
+      <button onclick="closePizzaModal()" class="absolute flex items-center justify-center"
+              style="top:12px;right:12px;width:34px;height:34px;border-radius:50%;
+                     background:rgba(0,0,0,.45);border:none;cursor:pointer;backdrop-filter:blur(4px);">
+        <span class="material-symbols-outlined text-white" style="font-size:18px;">close</span>
+      </button>
+    </div>
+    <!-- Info -->
+    <div style="padding:16px 16px 8px;">
+      <h3 id="sheetTitle" style="font-size:17px;font-weight:800;color:#1a1c1f;margin-bottom:4px;"></h3>
+      <p id="sheetPrice" style="font-size:15px;font-weight:800;color:#ba0013;margin-bottom:4px;"></p>
+      <p id="sheetDesc" style="font-size:12px;color:#5c5b5b;line-height:1.5;"></p>
+    </div>
+    <!-- Size options -->
+    <div id="sizeGroup" style="padding:0 16px 12px;display:none;">
+      <p style="font-size:11px;font-weight:700;color:#5c5b5b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Ўлчам</p>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <button class="size-btn" data-mult="1"
+                style="display:flex;align-items:center;justify-content:space-between;
+                       padding:11px 14px;border:2px solid #e7bdb8;border-radius:12px;
+                       background:transparent;cursor:pointer;transition:all .15s;">
+          <span style="font-size:13px;font-weight:600;color:#1a1c1f;">S — Кичик</span>
+          <span id="priceS" style="font-size:13px;font-weight:800;color:#ba0013;">—</span>
+        </button>
+        <button class="size-btn" data-mult="1.38"
+                style="display:flex;align-items:center;justify-content:space-between;
+                       padding:11px 14px;border:2px solid #e7bdb8;border-radius:12px;
+                       background:transparent;cursor:pointer;transition:all .15s;">
+          <span style="font-size:13px;font-weight:600;color:#1a1c1f;">M — Ўрта</span>
+          <span id="priceM" style="font-size:13px;font-weight:800;color:#ba0013;">—</span>
+        </button>
+        <button class="size-btn" data-mult="1.75"
+                style="display:flex;align-items:center;justify-content:space-between;
+                       padding:11px 14px;border:2px solid #e7bdb8;border-radius:12px;
+                       background:transparent;cursor:pointer;transition:all .15s;">
+          <span style="font-size:13px;font-weight:600;color:#1a1c1f;">L — Катта</span>
+          <span id="priceL" style="font-size:13px;font-weight:800;color:#ba0013;">—</span>
+        </button>
+      </div>
+    </div>
+    <!-- Qty + Add -->
+    <div style="padding:12px 16px 20px;border-top:1px solid #e7bdb8;">
+      <!-- Qty row -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span style="font-size:12px;font-weight:600;color:#5c5b5b;">Миқдор</span>
+        <div style="display:flex;align-items:center;gap:16px;background:#f3f3f8;border-radius:12px;padding:6px 14px;">
+          <button id="sheetMinus" disabled
+                  style="width:28px;height:28px;border:none;background:transparent;
+                         font-size:1.3rem;font-weight:700;cursor:pointer;color:#1a1c1f;
+                         display:flex;align-items:center;justify-content:center;line-height:1;">−</button>
+          <span id="sheetQtyNum" style="font-size:16px;font-weight:800;min-width:24px;text-align:center;color:#1a1c1f;">1</span>
+          <button id="sheetPlus"
+                  style="width:28px;height:28px;border-radius:50%;background:#e31e24;border:none;
+                         cursor:pointer;display:flex;align-items:center;justify-content:center;">
+            <span class="material-symbols-outlined text-white" style="font-size:16px;">add</span>
+          </button>
+        </div>
+      </div>
+      <!-- Add button -->
+      <button id="sheetAddBtn"
+              style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+                     background:#e31e24;color:#fff;padding:14px;border-radius:14px;border:none;cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size:20px;font-variation-settings:'FILL' 1;">shopping_basket</span>
+        <span id="sheetAddLabel" style="font-size:14px;font-weight:700;">Саватга қўшиш</span>
+        <span id="sheetTotalPrice" style="font-size:14px;font-weight:800;background:rgba(0,0,0,.15);
+              padding:2px 10px;border-radius:999px;"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ TOAST ════ -->
+<div id="addToast"
+     style="position:fixed;top:76px;left:50%;transform:translateX(-50%) translateY(-16px);
+            z-index:80;background:#1a1c1f;color:#fff;
+            padding:10px 20px;border-radius:999px;
+            font-size:13px;font-weight:700;
+            display:flex;align-items:center;gap:8px;
+            opacity:0;transition:opacity .2s,transform .2s;
+            pointer-events:none;white-space:nowrap;">
+  <span class="material-symbols-outlined" style="font-size:18px;color:#4ade80;">check_circle</span>
+  <span id="toastText">Саватга қўшилди</span>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ════ GEOLOCATION ════ */
+function requestLocation(){
+  var txt  = document.getElementById('locationText');
+  var icon = document.getElementById('locationIcon');
+  if(!navigator.geolocation){
+    txt.textContent = 'Браузер қўллаб-қувватламайди';
+    return;
+  }
+  /* Spinner ko'rsatish */
+  icon.textContent = 'sync';
+  icon.style.animation = 'spin 1s linear infinite';
+  txt.textContent = 'Аниқланмоқда…';
+  txt.style.color = '#5c5b5b';
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      var lat = pos.coords.latitude;
+      var lon = pos.coords.longitude;
+      /* Nominatim reverse geocoding — bepul, API key shart emas */
+      fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lon+'&accept-language=uz,ru', {
+        headers: { 'Accept-Language': 'uz,ru' }
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var a = data.address || {};
+        /* Qisqa manzil qurish */
+        var parts = [];
+        if(a.road || a.pedestrian)    parts.push(a.road || a.pedestrian);
+        if(a.suburb || a.neighbourhood) parts.push(a.suburb || a.neighbourhood);
+        if(a.city || a.town || a.village) parts.push(a.city || a.town || a.village);
+        var addr = parts.length ? parts.slice(0,2).join(', ') : (data.display_name||'').split(',').slice(0,2).join(', ');
+        txt.textContent  = addr || 'Манзил топилди';
+        txt.style.color  = '#1a1c1f';
+        icon.textContent = 'my_location';
+        icon.style.color = '#e31e24';
+        icon.style.animation = '';
+        /* sessionStorage ga saqlash — qayta yuklanishda so'ramaslik */
+        try{ sessionStorage.setItem('florella_addr', addr); } catch(e){}
+      })
+      .catch(function(){
+        txt.textContent = lat.toFixed(4)+', '+lon.toFixed(4);
+        icon.textContent = 'my_location';
+        icon.style.animation = '';
+      });
+    },
+    function(err){
+      icon.textContent = 'location_off';
+      icon.style.animation = '';
+      icon.style.color = '#5c5b5b';
+      if(err.code === 1)
+        txt.textContent = 'Рухсат берилмади';
+      else
+        txt.textContent = 'Манзил аниқланмади';
+      txt.style.color = '#5c5b5b';
+    },
+    { timeout: 8000, enableHighAccuracy: true }
+  );
+}
+
+/* Sahifa yuklanganda avtomatik ishga tushirish */
+(function(){
+  /* sessionStorage da saqlangan bo'lsa — qayta so'ramaslik */
+  try{
+    var saved = sessionStorage.getItem('florella_addr');
+    if(saved){
+      var txt  = document.getElementById('locationText');
+      var icon = document.getElementById('locationIcon');
+      if(txt)  { txt.textContent = saved; txt.style.color = '#1a1c1f'; }
+      if(icon) { icon.textContent = 'my_location'; icon.style.color = '#e31e24'; }
+      return;
+    }
+  } catch(e){}
+  /* Birinchi kirganida avtomatik so'rash */
+  setTimeout(requestLocation, 800);
+})();
+
+/* Spin animatsiyasi */
+(function(){
+  var st = document.createElement('style');
+  st.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+  document.head.appendChild(st);
+})();
+
+/* ════ HERO SLIDER ════ */
+(function(){
+  var slider=document.getElementById('heroSlider');
+  if(!slider) return;
+  var slides=slider.querySelectorAll('.hero-slide'),dots=slider.querySelectorAll('.hero-dot');
+  var ctr=document.getElementById('heroCounter');
+  if(slides.length<2) return;
+  var cur=0,busy=false;
+  function show(n){
+    if(busy)return;busy=true;
+    var prev=cur,next=((n%slides.length)+slides.length)%slides.length;
+    if(prev===next){busy=false;return;}
+    slides[prev].classList.remove('active');slides[prev].classList.add('leaving');
+    cur=next;slides[cur].classList.add('active');
+    if(dots[prev])dots[prev].classList.remove('active');
+    if(dots[cur])dots[cur].classList.add('active');
+    if(ctr)ctr.textContent=(cur+1)+' / '+slides.length;
+    setTimeout(function(){slides[prev].classList.remove('leaving');busy=false;},1100);
+  }
+  dots.forEach(function(d){d.addEventListener('click',function(){show(+d.dataset.idx);});});
+  var tx=0;
+  slider.addEventListener('touchstart',function(e){tx=e.touches[0].clientX;},{passive:true});
+  slider.addEventListener('touchend',function(e){var dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>45)show(dx<0?cur+1:cur-1);},{passive:true});
+  setInterval(function(){show(cur+1);},5000);
+})();
+
+/* ════ SCROLL HELPERS ════ */
+var _scrollLock=false,_scrollTimer;
+function _getOffset(){
+  return 64+8;
+}
+function _scrollToSection(slug){
+  /* Barcha sectionlar ko'rinadi — faqat scroll */
+  document.querySelectorAll('.menu-section').forEach(function(s){s.style.display='';});
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      var sec=document.querySelector('.menu-section[data-section="'+slug+'"]');
+      if(!sec)return;
+      var top=sec.getBoundingClientRect().top+window.scrollY-_getOffset();
+      window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+      _scrollLock=true;clearTimeout(_scrollTimer);
+      _scrollTimer=setTimeout(function(){_scrollLock=false;},900);
+    });
+  });
+}
+
+/* ════ CAT CARD ACTIVE STATE ════ */
+function _setActiveCatCard(cat){
+  /* Top carousel cardlarni highlight qilish */
+  document.querySelectorAll('#catCarousel > div').forEach(function(card){
+    var slug=card.id==='catCardAll'?'all':(card.id||'').replace('catCard-','');
+    var inner=card.querySelector('div');
+    if(!inner)return;
+    var a=slug===cat;
+    inner.style.outline=a?'2.5px solid #e31e24':'none';
+    inner.style.outlineOffset='2px';
+  });
+}
+
+/* ════ CATEGORY NAV (yuqori kartalar) ════ */
+function filterByCategory(cat){
+  _setActiveCatCard(cat);
+  if(cat==='all'){
+    document.getElementById('menu')?.scrollIntoView({behavior:'smooth'});
+  } else {
+    _scrollToSection(cat);
+  }
+}
+
+/* ════ STICKY PILLS (bo'sh — strip olib tashlandi) ════ */
+(function(){
+
+  /* Auto-highlight top category cards on scroll */
+  var sObs=new IntersectionObserver(function(entries){
+    if(_scrollLock)return;
+    entries.forEach(function(e){
+      if(!e.isIntersecting)return;
+      _setActiveCatCard(e.target.dataset.section);
+    });
+  },{rootMargin:'-72px 0px -65% 0px',threshold:0});
+  document.querySelectorAll('.menu-section').forEach(function(sec){sObs.observe(sec);});
+})();
+
+/* ════ SEARCH ════ */
+(function(){
+  var input=document.getElementById('searchInput');
+  if(!input)return;
+  input.addEventListener('input',function(){
+    var q=input.value.trim().toLowerCase();
+    document.querySelectorAll('.menu-section').forEach(function(sec){
+      var vis=0;
+      sec.querySelectorAll('.product-card').forEach(function(card){
+        var name=(card.querySelector('h4')?.textContent||'').toLowerCase();
+        var show=!q||name.includes(q);
+        card.style.display=show?'':'none';
+        if(show)vis++;
+      });
+      sec.style.display=(vis>0||!q)?'':'none';
+    });
+  });
+})();
+
+/* ════ TOAST ════ */
+var _toastTimer;
+function showToast(name){
+  var el=document.getElementById('addToast');
+  var tx=document.getElementById('toastText');
+  if(!el)return;
+  if(tx) tx.textContent=name+' — саватга қўшилди';
+  clearTimeout(_toastTimer);
+  el.style.opacity='1';
+  el.style.transform='translateX(-50%) translateY(0)';
+  _toastTimer=setTimeout(function(){
+    el.style.opacity='0';
+    el.style.transform='translateX(-50%) translateY(-16px)';
+  },2000);
+}
+
+/* ════ ITEM MODAL ════ */
+(function(){
+  var modal    = document.getElementById('pizzaModal');
+  var card     = document.getElementById('pizzaCard');
+  var bd       = document.getElementById('pizzaBackdrop');
+  var img      = document.getElementById('sheetImg');
+  var imgPh    = document.getElementById('sheetImgPh');
+  var titleEl  = document.getElementById('sheetTitle');
+  var priceEl  = document.getElementById('sheetPrice');
+  var descEl   = document.getElementById('sheetDesc');
+  var sizeGrp  = document.getElementById('sizeGroup');
+  var sizeBtns = document.querySelectorAll('.size-btn');
+  var minusBtn = document.getElementById('sheetMinus');
+  var plusBtn  = document.getElementById('sheetPlus');
+  var qtyEl    = document.getElementById('sheetQtyNum');
+  var totalEl  = document.getElementById('sheetTotalPrice');
+  var addBtn   = document.getElementById('sheetAddBtn');
+  if(!modal || !card || !bd) return;
+
+  var activeItem = null, qty = 1, mult = 1;
+
+  function curPrice(){ return Math.round(activeItem.basePrice * mult); }
+  function updTotal(){ if(totalEl) totalEl.textContent = fmt(curPrice() * qty); }
+
+  function openModal(btn){
+    if(!btn || !btn.dataset.id) return;
+    activeItem = {
+      id        : +btn.dataset.id,
+      name      : btn.dataset.name      || '',
+      basePrice : +btn.dataset.price    || 0,
+      desc      : btn.dataset.desc      || '',
+      image     : btn.dataset.image     || '',
+      category  : btn.dataset.category  || ''
+    };
+    mult = 1;
+    /* Savatdagi mavjud sonni oldindan ko'rsatish */
+    var existing = cart.find(function(i){ return i.id === activeItem.id; });
+    qty = existing ? existing.quantity : 1;
+
+    if(titleEl)  titleEl.textContent  = activeItem.name;
+    if(priceEl)  priceEl.textContent  = fmt(activeItem.basePrice);
+    if(descEl){  descEl.textContent   = activeItem.desc;
+                 descEl.style.display = activeItem.desc ? '' : 'none'; }
+
+    if(activeItem.image){
+      img.src = activeItem.image; img.style.display = ''; imgPh.style.display = 'none';
+    } else {
+      img.style.display = 'none'; imgPh.style.display = '';
+      var EM = {rolllar:'🍱',pizzalar:'🍕',setlar:'🎁',zakuskalar:'🥢',ichimliklar:'🍵',kokteyl:'🍹'};
+      imgPh.textContent = EM[activeItem.category] || '🍽️';
+    }
+
+    var isPizza = activeItem.category === 'pizzalar';
+    if(sizeGrp) sizeGrp.style.display = isPizza ? '' : 'none';
+    if(isPizza){
+      var bp = activeItem.basePrice;
+      var ps = document.getElementById('priceS');
+      var pm = document.getElementById('priceM');
+      var pl = document.getElementById('priceL');
+      if(ps) ps.textContent = fmt(bp);
+      if(pm) pm.textContent = fmt(Math.round(bp * 1.38));
+      if(pl) pl.textContent = fmt(Math.round(bp * 1.75));
+      sizeBtns.forEach(function(b){ b.classList.remove('active'); });
+      if(sizeBtns[0]) sizeBtns[0].classList.add('active');
+      mult = 1;
+    }
+
+    if(qtyEl)    qtyEl.textContent    = qty;
+    if(minusBtn) minusBtn.disabled    = qty <= 1;
+    updTotal();
+
+    /* Tugma matni: savatda bor bo'lsa "Yangilash" */
+    var labelEl = document.getElementById('sheetAddLabel');
+    if(labelEl) labelEl.textContent = existing ? 'Yangilash' : 'Саватга қўшиш';
+
+    modal.classList.remove('pointer-events-none');
+    bd.style.background  = 'rgba(0,0,0,.52)';
+    card.style.opacity   = '1';
+    card.style.transform = 'scale(1)';
+    document.body.style.overflow = 'hidden';
+  }
+
+  window.closePizzaModal = function(){
+    bd.style.background  = 'transparent';
+    card.style.opacity   = '0';
+    card.style.transform = 'scale(.92)';
+    setTimeout(function(){ modal.classList.add('pointer-events-none'); }, 220);
+    document.body.style.overflow = '';
+    activeItem = null;
+  };
+
+  /* Size tugmalari */
+  sizeBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      sizeBtns.forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      mult = +btn.dataset.mult;
+      updTotal();
+    });
+  });
+
+  /* Miqdor */
+  if(minusBtn) minusBtn.addEventListener('click', function(){
+    if(qty > 1){ qty--; qtyEl.textContent = qty; minusBtn.disabled = qty <= 1; updTotal(); }
+  });
+  if(plusBtn) plusBtn.addEventListener('click', function(){
+    qty++; qtyEl.textContent = qty; if(minusBtn) minusBtn.disabled = false; updTotal();
+  });
+
+  /* "Саватга қўшиш" / "Yangilash" */
+  if(addBtn) addBtn.addEventListener('click', function(){
+    if(!activeItem) return;
+    var id       = activeItem.id;
+    var price    = curPrice();
+    var itemName = activeItem.name;
+
+    /* Pizza size label */
+    if(activeItem.category === 'pizzalar'){
+      var a = document.querySelector('.size-btn.active');
+      if(a){ var sp = a.querySelector('span'); if(sp){ var t = sp.textContent;
+        itemName += t.includes('S') ? ' (S)' : t.includes('M') ? ' (M)' : t.includes('L') ? ' (L)' : ''; } }
+    }
+
+    /* Savatni yangilash yoki qo'shish */
+    var ex = cart.find(function(i){ return i.id === id && i.price === price; });
+    if(ex){ ex.quantity = qty; }
+    else  { cart.push({
+      id:id, name:itemName, price:price, quantity:qty,
+      image   : activeItem.image    || '',
+      category: activeItem.category || ''
+    }); }
+
+    var savedName = itemName;
+    var origBtn   = document.getElementById('btn-' + id);
+    closePizzaModal();
+    updateCartUI();
+    updateItemBadges();
+    showToast(savedName);
+    if(origBtn){ origBtn.classList.add('in-cart'); updateBtnLabel(origBtn, id, price); }
+  });
+
+  /* Barcha .btn-add bosilganda modal ochiladi */
+  document.addEventListener('click', function(e){
+    if(!modal.classList.contains('pointer-events-none')) return;
+    var btn = e.target.closest('.btn-add');
+    if(!btn || !btn.dataset.id) return;
+    openModal(btn);
+  });
+
+  /* Esc bilan yopish */
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') closePizzaModal();
+  });
+})();
+
+/* ════ STICKY CATEGORY BAR ════ */
+(function(){
+  var bar     = document.getElementById('catStickyBar');
+  var aboutEl = document.getElementById('about');
+  if(!bar) return;
+
+  function showBar(){
+    bar.style.transform    = 'translateY(0)';
+    bar.style.opacity      = '1';
+    bar.style.pointerEvents= 'auto';
+  }
+  function hideBar(){
+    bar.style.transform    = 'translateY(-100%)';
+    bar.style.opacity      = '0';
+    bar.style.pointerEvents= 'none';
+  }
+
+  function setActive(cat){
+    document.querySelectorAll('.scat-pill').forEach(function(p){
+      var a = p.dataset.cat === cat;
+      p.style.background = a ? '#e31e24' : '#ededf2';
+      p.style.color      = a ? '#fff'    : '#1a1c1f';
+      if(a) p.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+    });
+  }
+
+  /* triggerY — kategoriya karuselining pastki chegarasi (sahifa yuqorisidan) */
+  var triggerY = 300;
+  function calcTrigger(){
+    var catSec = document.getElementById('catCarousel')?.closest('section');
+    if(catSec) triggerY = catSec.offsetTop + catSec.offsetHeight;
+  }
+  /* Sahifa yuklangandan keyin hisoblash */
+  if(document.readyState === 'complete') calcTrigger();
+  else window.addEventListener('load', calcTrigger);
+
+  /* ── Scroll handler ── */
+  var OFFSET = 64 + 46 + 12; /* topBar + stickyBar + buffer */
+  window.addEventListener('scroll', function(){
+    var y        = window.scrollY;
+    var aboutY   = aboutEl ? aboutEl.getBoundingClientRect().top + y : Infinity;
+    var inRange  = y > triggerY && y + 80 < aboutY;
+    inRange ? showBar() : hideBar();
+
+    /* Aktiv kategoriya */
+    if(_scrollLock) return;
+    var sections = document.querySelectorAll('.menu-section');
+    var current  = null;
+    sections.forEach(function(sec){
+      if(sec.getBoundingClientRect().top <= OFFSET) current = sec.dataset.section;
+    });
+    if(current) setActive(current);
+  }, { passive:true });
+
+  /* filterByCategory bilan sync */
+  var _orig = window.filterByCategory;
+  window.filterByCategory = function(cat){
+    _orig(cat);
+    setActive(cat);
+  };
+})();
+
+/* ════ BADGE HELPERS ════ */
+function updateBtnLabel(btn, id, price){
+  var item = cart.find(function(i){ return i.id === id; });
+  if(item){
+    btn.classList.add('in-cart');
+    btn.innerHTML =
+      '<span class="material-symbols-outlined" style="font-size:16px;">check</span>'
+    + '<span style="font-size:13px;font-weight:800;">' + item.quantity + ' та</span>';
+  } else {
+    btn.classList.remove('in-cart');
+    btn.innerHTML =
+      '<span class="material-symbols-outlined" style="font-size:18px;">add</span>'
+    + '<span style="font-size:13px;font-weight:700;">Қўшиш</span>';
+  }
+}
+function updateItemBadges(){
+  document.querySelectorAll('.btn-add[id^="btn-"]').forEach(function(btn){
+    updateBtnLabel(btn, +btn.dataset.id, +btn.dataset.price);
+  });
+}
+</script>
+{% endblock %}
