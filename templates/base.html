@@ -18,13 +18,14 @@
   <!-- Tailwind CSS (built) -->
   {% load static %}
   <link rel="stylesheet" href="{% static 'css/tailwind.css' %}?v=2">
+  <link rel="stylesheet" href="{% static 'css/desktop.css' %}?v=1">
 
   {% block extra_head %}{% endblock %}
 </head>
-<body class="min-h-screen pb-20" style="background:#f9f9fe;color:#1a1c1f;">
+<body class="min-h-screen pb-20" style="background:#f9f9fe;color:#1a1c1f;" id="mainBody">
 
 <!-- ═══ TOP APP BAR ═══ -->
-<header class="fixed top-0 w-full z-50 flex justify-between items-center px-4 h-16"
+<header id="mainHeader" class="fixed top-0 w-full z-50 flex justify-between items-center px-4 h-16"
         style="background:#f9f9fe;box-shadow:0 1px 0 #e7bdb8;">
   <a href="{% url 'menu:menu_list' %}" class="flex items-center gap-3 no-underline">
     <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
@@ -69,7 +70,7 @@
 {% block content %}{% endblock %}
 
 <!-- ═══ FAB CART ═══ -->
-<button onclick="openCartDrawer()"
+<button id="fabCart" onclick="openCartDrawer()"
         class="fixed right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center active:scale-90 transition-transform"
         style="bottom:84px;background:#e31e24;box-shadow:0 4px 20px rgba(227,30,36,.4);">
   <span class="material-symbols-outlined text-white" style="font-variation-settings:'FILL' 1;">shopping_basket</span>
@@ -79,7 +80,7 @@
 </button>
 
 <!-- ═══ BOTTOM NAV ═══ -->
-<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center"
+<nav id="bottomNav" class="fixed bottom-0 w-full z-50 flex justify-around items-center"
      style="height:68px;background:#f9f9fe;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.06);">
   <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-4"
           style="color:#e31e24;" id="navHome"

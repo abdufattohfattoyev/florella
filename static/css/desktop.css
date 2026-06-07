@@ -1,0 +1,89 @@
+/* ══════════════════════════════════════════════
+   FLORELLA CAFE — Desktop Responsive Styles
+══════════════════════════════════════════════ */
+
+/* ── Product grid ── */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+@media (min-width: 640px) {
+  .product-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+}
+@media (min-width: 1024px) {
+  .product-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+}
+@media (min-width: 1280px) {
+  .product-grid { grid-template-columns: repeat(5, 1fr); gap: 18px; }
+}
+
+/* ── Content max-width ── */
+.desktop-wrap {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ── Hero slider ── */
+@media (min-width: 768px) {
+  .hero-wrap { aspect-ratio: 21/7 !important; }
+}
+@media (min-width: 1024px) {
+  .hero-wrap { aspect-ratio: 21/6 !important; }
+}
+
+/* ── Tablet: 768px ── */
+@media (min-width: 768px) {
+  /* Bottom nav yashir */
+  #bottomNav { display: none !important; }
+
+  /* Body bottom padding olib tashla */
+  body { padding-bottom: 0 !important; }
+  body.pb-20 { padding-bottom: 0 !important; }
+
+  /* FAB cart tepaga ko'tar */
+  #fabCart { bottom: 24px !important; }
+
+  /* Main content padding */
+  .desktop-wrap { padding: 0 24px; }
+
+  /* Header wider */
+  #mainHeader { padding-left: 24px !important; padding-right: 24px !important; }
+
+  /* Category bar kengaytirilgan */
+  #catStickyBar { left: 0; right: 0; }
+
+  /* Search overlay */
+  #searchOverlay { padding-left: 24px !important; padding-right: 24px !important; }
+}
+
+/* ── Desktop: 1024px ── */
+@media (min-width: 1024px) {
+  .desktop-wrap { padding: 0 40px; }
+
+  /* Header logo kattaroq */
+  #mainHeader .brand-text { font-size: 1.25rem !important; }
+
+  /* Cart drawer kengroq */
+  #cartPanel { max-width: 520px !important; }
+
+  /* Product card hover ta'siri kuchliroq */
+  .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(227, 30, 36, 0.15) !important;
+  }
+
+  /* Category scroll - wrap qilish mumkin */
+  #catCarousel { flex-wrap: wrap !important; gap: 12px !important; }
+
+  /* Footer grid */
+  .footer-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* ── Large desktop: 1280px ── */
+@media (min-width: 1280px) {
+  .desktop-wrap { padding: 0 60px; }
+  #catCarousel { padding-left: 0 !important; padding-right: 0 !important; }
+}
