@@ -35,9 +35,9 @@ class MenuItemAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Асосий', {'fields': ('category', 'name', 'description', 'image')}),
-        ('Нарxлар', {
-            'fields': ('price', 'price_m', 'price_l'),
-            'description': 'Пицца учун S/M/L нарxларини алоҳида киритинг. Бошқа таомлар учун фақат S (асосий) нарx кифоя.',
+        ('Нарxлар ва ўлчамлар', {
+            'fields': ('price', 'size_s', 'price_m', 'size_m', 'price_l', 'size_l'),
+            'description': 'Пицца учун S/M/L нарx ва ўлчам номларини киритинг (масалан: 20 см, 30 см, 40 см). Бошқа таомлар учун фақат S кифоя.',
         }),
         ('Ҳолат',  {'fields': ('is_available', 'is_popular')}),
     )

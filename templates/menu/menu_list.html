@@ -59,6 +59,9 @@
                       data-price="{{ item.price|floatformat:0 }}"
                       data-price-m="{{ item.price_m|floatformat:0 }}"
                       data-price-l="{{ item.price_l|floatformat:0 }}"
+                      data-size-s="{{ item.size_s }}"
+                      data-size-m="{{ item.size_m }}"
+                      data-size-l="{{ item.size_l }}"
                       data-desc="{{ item.description }}"
                       data-image="{{ item.image.url }}" data-category="{{ item.category.slug }}">
                 Буюртма бериш
@@ -247,6 +250,9 @@
                         data-price="{{ item.price|floatformat:0 }}"
                         data-price-m="{{ item.price_m|floatformat:0 }}"
                         data-price-l="{{ item.price_l|floatformat:0 }}"
+                        data-size-s="{{ item.size_s }}"
+                        data-size-m="{{ item.size_m }}"
+                        data-size-l="{{ item.size_l }}"
                         data-desc="{{ item.description }}"
                         data-image="{% if item.image %}{{ item.image.url }}{% endif %}"
                         data-category="{{ cat.slug }}" aria-label="{{ item.name }}">
@@ -682,6 +688,9 @@ function showToast(name){
       basePrice : +btn.dataset.price    || 0,
       priceM    : +btn.dataset.priceM   || 0,
       priceL    : +btn.dataset.priceL   || 0,
+      sizeS     : btn.dataset.sizeS     || 'S — Кичик',
+      sizeM     : btn.dataset.sizeM     || 'M — Ўрта',
+      sizeL     : btn.dataset.sizeL     || 'L — Катта',
       desc      : btn.dataset.desc      || '',
       image     : btn.dataset.image     || '',
       category  : btn.dataset.category  || ''
@@ -716,6 +725,13 @@ function showToast(name){
       if(ps) ps.textContent = fmt(bp);
       if(pm) pm.textContent = fmt(bm);
       if(pl) pl.textContent = fmt(bl);
+      /* O'lcham nomlarini yangilash */
+      var sNames = sizeBtns[0] && sizeBtns[0].querySelector('span');
+      var mNames = sizeBtns[1] && sizeBtns[1].querySelector('span');
+      var lNames = sizeBtns[2] && sizeBtns[2].querySelector('span');
+      if(sNames) sNames.textContent = activeItem.sizeS || 'S — Кичик';
+      if(mNames) mNames.textContent = activeItem.sizeM || 'M — Ўрта';
+      if(lNames) lNames.textContent = activeItem.sizeL || 'L — Катта';
       /* M va L uchun to'g'ri narxni saqlash */
       if(sizeBtns[0]) sizeBtns[0].dataset.fixedPrice = bp;
       if(sizeBtns[1]) sizeBtns[1].dataset.fixedPrice = bm;
