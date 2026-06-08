@@ -34,7 +34,11 @@ class MenuItemAdmin(admin.ModelAdmin):
     ordering       = ('category__order', 'name')
 
     fieldsets = (
-        ('Асосий', {'fields': ('category', 'name', 'description', 'price', 'image')}),
+        ('Асосий', {'fields': ('category', 'name', 'description', 'image')}),
+        ('Нарxлар', {
+            'fields': ('price', 'price_m', 'price_l'),
+            'description': 'Пицца учун S/M/L нарxларини алоҳида киритинг. Бошқа таомлар учун фақат S (асосий) нарx кифоя.',
+        }),
         ('Ҳолат',  {'fields': ('is_available', 'is_popular')}),
     )
 

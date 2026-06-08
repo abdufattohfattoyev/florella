@@ -56,7 +56,10 @@
                       style="background:#fff;color:#1a1c1f;padding:8px 18px;border-radius:999px;border:none;
                              font-size:13px;font-weight:700;cursor:pointer;"
                       data-id="{{ item.id }}" data-name="{{ item.name }}"
-                      data-price="{{ item.price|floatformat:0 }}" data-desc="{{ item.description }}"
+                      data-price="{{ item.price|floatformat:0 }}"
+                      data-price-m="{{ item.price_m|floatformat:0 }}"
+                      data-price-l="{{ item.price_l|floatformat:0 }}"
+                      data-desc="{{ item.description }}"
                       data-image="{{ item.image.url }}" data-category="{{ item.category.slug }}">
                 Буюртма бериш
               </button>
@@ -167,7 +170,10 @@
             <button class="btn-add w-full flex items-center justify-center gap-1.5"
                     style="background:#e31e24;color:#fff;padding:9px 0;border-radius:12px;border:none;cursor:pointer;"
                     data-id="{{ item.id }}" data-name="{{ item.name }}"
-                    data-price="{{ item.price|floatformat:0 }}" data-desc="{{ item.description }}"
+                    data-price="{{ item.price|floatformat:0 }}"
+                    data-price-m="{{ item.price_m|floatformat:0 }}"
+                    data-price-l="{{ item.price_l|floatformat:0 }}"
+                    data-desc="{{ item.description }}"
                     data-image="{% if item.image %}{{ item.image.url }}{% endif %}"
                     data-category="{{ item.category.slug }}" aria-label="{{ item.name }}">
               <span class="material-symbols-outlined" style="font-size:18px;">add</span>
@@ -238,7 +244,10 @@
                         id="btn-{{ item.id }}"
                         style="background:#e31e24;color:#fff;padding:9px 0;border-radius:12px;border:none;cursor:pointer;"
                         data-id="{{ item.id }}" data-name="{{ item.name }}"
-                        data-price="{{ item.price|floatformat:0 }}" data-desc="{{ item.description }}"
+                        data-price="{{ item.price|floatformat:0 }}"
+                        data-price-m="{{ item.price_m|floatformat:0 }}"
+                        data-price-l="{{ item.price_l|floatformat:0 }}"
+                        data-desc="{{ item.description }}"
                         data-image="{% if item.image %}{{ item.image.url }}{% endif %}"
                         data-category="{{ cat.slug }}" aria-label="{{ item.name }}">
                   <span class="material-symbols-outlined" style="font-size:18px;">add</span>
@@ -658,7 +667,11 @@ function showToast(name){
 
   var activeItem = null, qty = 1, mult = 1;
 
-  function curPrice(){ return Math.round(activeItem.basePrice * mult); }
+  function curPrice(){
+    var activeBtn = document.querySelector('.size-btn.active');
+    if(activeBtn && activeBtn.dataset.fixedPrice) return +activeBtn.dataset.fixedPrice;
+    return Math.round(activeItem.basePrice * mult);
+  }
   function updTotal(){ if(totalEl) totalEl.textContent = fmt(curPrice() * qty); }
 
   function openModal(btn){
@@ -667,6 +680,8 @@ function showToast(name){
       id        : +btn.dataset.id,
       name      : btn.dataset.name      || '',
       basePrice : +btn.dataset.price    || 0,
+      priceM    : +btn.dataset.priceM   || 0,
+      priceL    : +btn.dataset.priceL   || 0,
       desc      : btn.dataset.desc      || '',
       image     : btn.dataset.image     || '',
       category  : btn.dataset.category  || ''
@@ -693,12 +708,18 @@ function showToast(name){
     if(sizeGrp) sizeGrp.style.display = isPizza ? '' : 'none';
     if(isPizza){
       var bp = activeItem.basePrice;
+      var bm = activeItem.priceM || Math.round(bp * 1.38);
+      var bl = activeItem.priceL || Math.round(bp * 1.75);
       var ps = document.getElementById('priceS');
       var pm = document.getElementById('priceM');
       var pl = document.getElementById('priceL');
       if(ps) ps.textContent = fmt(bp);
-      if(pm) pm.textContent = fmt(Math.round(bp * 1.38));
-      if(pl) pl.textContent = fmt(Math.round(bp * 1.75));
+      if(pm) pm.textContent = fmt(bm);
+      if(pl) pl.textContent = fmt(bl);
+      /* M va L uchun to'g'ri narxni saqlash */
+      if(sizeBtns[0]) sizeBtns[0].dataset.fixedPrice = bp;
+      if(sizeBtns[1]) sizeBtns[1].dataset.fixedPrice = bm;
+      if(sizeBtns[2]) sizeBtns[2].dataset.fixedPrice = bl;
       sizeBtns.forEach(function(b){ b.classList.remove('active'); });
       if(sizeBtns[0]) sizeBtns[0].classList.add('active');
       mult = 1;
