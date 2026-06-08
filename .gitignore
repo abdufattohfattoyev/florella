@@ -62,6 +62,12 @@ db.sqlite3
 db.sqlite3-journal
 staticfiles/
 
+# SSL sertifikatlari va certbot
+certbot/
+
+# Media fayllar (ixtiyoriy — serverdagi media gitga kirmaydi)
+# media/
+
 # Node
 node_modules/
 package-lock.json
