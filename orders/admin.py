@@ -29,9 +29,10 @@ class OrderAdmin(admin.ModelAdmin):
     ordering       = ('-created_at',)
 
     fieldsets = (
-        ('Мижоз', {'fields': ('customer_name', 'customer_phone')}),
-        ('Буюртма', {'fields': ('delivery_type', 'delivery_address', 'table_number', 'status', 'note', 'total_price')}),
-        ('Вақт', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
+        ('Holat va tur', {'fields': ('status', 'delivery_type')}),
+        ('Mijoz ma\'lumotlari', {'fields': ('customer_name', 'customer_phone', 'delivery_address')}),
+        ('Qo\'shimcha', {'fields': ('note', 'total_price'), 'classes': ('collapse',)}),
+        ('Vaqt', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
     )
 
     STATUS_COLORS = {

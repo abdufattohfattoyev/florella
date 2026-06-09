@@ -1,0 +1,185 @@
+{% extends "admin/change_form.html" %}
+{% load i18n l10n %}
+
+{% block field_sets %}
+{% if original %}
+
+<!-- ═══════════════════════════════════════════════════════
+     FLORELLA ADMIN — BUYURTMA KARTASI
+═══════════════════════════════════════════════════════ -->
+<style>
+.fl-card{background:var(--bs-card-bg,#2d303e);border-radius:16px;padding:18px 20px;margin-bottom:14px;box-shadow:0 2px 16px rgba(0,0,0,.2);}
+.fl-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6c757d;margin-bottom:6px;}
+.fl-val{font-size:14px;font-weight:700;margin:0;line-height:1.3;}
+.fl-icon-box{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.fl-item-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+.fl-item-row:last-child{border-bottom:none;}
+.fl-qty{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;background:#e31e24;color:#fff;font-size:11px;font-weight:800;border-radius:7px;flex-shrink:0;}
+.fl-status-pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:800;padding:8px 16px;border-radius:12px;}
+.fl-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6c757d;margin:0 0 12px;}
+</style>
+
+<!-- ── ORDER HEADER ── -->
+<div style="background:linear-gradient(135deg,#b5000a 0%,#e31e24 60%,#ff4d55 100%);
+            border-radius:18px;padding:22px 26px;margin-bottom:18px;
+            box-shadow:0 6px 24px rgba(227,30,36,.35);">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <p style="margin:0;font-size:11px;font-weight:700;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.08em;">Buyurtma raqami</p>
+      <h3 style="margin:4px 0 0;color:#fff;font-weight:900;font-size:1.6rem;">№ {{ original.pk }}</h3>
+    </div>
+    <div class="d-flex flex-column align-items-end gap-2">
+      <span style="font-size:12px;color:rgba(255,255,255,.65);">
+        📅 {{ original.created_at|date:"d.m.Y  H:i" }}
+      </span>
+      <span style="background:rgba(255,255,255,.2);backdrop-filter:blur(4px);
+                   color:#fff;font-size:12px;font-weight:700;
+                   padding:5px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.25);">
+        {% if original.delivery_type == 'delivery' %}🛵 Yetkazib berish{% else %}🚶 Olib ketish{% endif %}
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- ── TWO-COLUMN GRID ── -->
+<div class="row g-3 mb-2">
+
+  <!-- LEFT: Mijoz + Manzil + Izoh -->
+  <div class="col-12 col-xl-5">
+
+    <!-- Mijoz -->
+    <div class="fl-card">
+      <p class="fl-section-title">👤 Buyurtmachi</p>
+      <div class="d-flex flex-column gap-3">
+
+        <div class="d-flex align-items-center gap-3">
+          <div class="fl-icon-box" style="background:rgba(108,117,125,.15);">
+            <i class="fas fa-user" style="color:#adb5bd;font-size:14px;"></i>
+          </div>
+          <div>
+            <p class="fl-label mb-0">Ism</p>
+            <p class="fl-val">{{ original.customer_name }}</p>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+          <div class="fl-icon-box" style="background:rgba(108,117,125,.15);">
+            <i class="fas fa-phone" style="color:#adb5bd;font-size:14px;"></i>
+          </div>
+          <div>
+            <p class="fl-label mb-0">Telefon</p>
+            <p class="fl-val">
+              <a href="tel:{{ original.customer_phone }}" style="color:inherit;text-decoration:none;">
+                {{ original.customer_phone }}
+              </a>
+            </p>
+          </div>
+        </div>
+
+        {% if original.delivery_type == 'delivery' %}
+        <div class="d-flex align-items-start gap-3">
+          <div class="fl-icon-box" style="background:rgba(231,76,60,.15);margin-top:2px;">
+            <i class="fas fa-map-marker-alt" style="color:#e74c3c;font-size:14px;"></i>
+          </div>
+          <div>
+            <p class="fl-label mb-0">Yetkazish manzili</p>
+            <p class="fl-val" style="line-height:1.45;">{{ original.delivery_address|default:"—" }}</p>
+          </div>
+        </div>
+        {% else %}
+        <div class="d-flex align-items-center gap-3">
+          <div class="fl-icon-box" style="background:rgba(39,174,96,.12);">
+            <i class="fas fa-store" style="color:#27ae60;font-size:14px;"></i>
+          </div>
+          <div>
+            <p class="fl-label mb-0">Buyurtma turi</p>
+            <p class="fl-val" style="color:#27ae60;">Restorandan olib ketish</p>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    <!-- Holat -->
+    <div class="fl-card d-flex align-items-center justify-content-between" style="padding:14px 20px;">
+      <div>
+        <p class="fl-label mb-1">Joriy holat</p>
+        <p style="margin:0;font-size:15px;font-weight:800;">{{ original.get_status_display }}</p>
+      </div>
+      {% if original.status == 'new' %}
+        <span class="fl-status-pill" style="background:rgba(52,152,219,.15);color:#3498db;">🔵 Yangi</span>
+      {% elif original.status == 'confirmed' %}
+        <span class="fl-status-pill" style="background:rgba(155,89,182,.15);color:#9b59b6;">🟣 Tasdiqlandi</span>
+      {% elif original.status == 'preparing' %}
+        <span class="fl-status-pill" style="background:rgba(243,156,18,.15);color:#f39c12;">🟡 Tayyorlanmoqda</span>
+      {% elif original.status == 'ready' %}
+        <span class="fl-status-pill" style="background:rgba(39,174,96,.15);color:#27ae60;">🟢 Tayyor</span>
+      {% elif original.status == 'on_the_way' %}
+        <span class="fl-status-pill" style="background:rgba(230,126,34,.15);color:#e67e22;">🚗 Yo'lda</span>
+      {% elif original.status == 'delivered' %}
+        <span class="fl-status-pill" style="background:rgba(46,204,113,.15);color:#2ecc71;">✅ Yetkazildi</span>
+      {% elif original.status == 'cancelled' %}
+        <span class="fl-status-pill" style="background:rgba(231,76,60,.15);color:#e74c3c;">🔴 Bekor</span>
+      {% endif %}
+    </div>
+
+    {% if original.note %}
+    <div class="fl-card" style="border-left:3px solid #f39c12;">
+      <p class="fl-section-title">📝 Izoh</p>
+      <p style="margin:0;font-size:13px;line-height:1.55;color:#ced4da;">{{ original.note }}</p>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- RIGHT: Buyurtma tarkibi -->
+  <div class="col-12 col-xl-7">
+    <div class="fl-card" style="height:100%;min-height:220px;">
+      <p class="fl-section-title">🛒 Buyurtma tarkibi</p>
+
+      {% for item in original.items.all %}
+      <div class="fl-item-row">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+          <span class="fl-qty">{{ item.quantity }}</span>
+          <div style="min-width:0;">
+            <p style="margin:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              {{ item.menu_item.name }}
+            </p>
+            {% if item.price %}
+            <p style="margin:0;font-size:11px;color:#6c757d;">{{ item.price|floatformat:0 }} сўм / dona</p>
+            {% endif %}
+          </div>
+        </div>
+        <span style="font-size:14px;font-weight:800;color:#e74c3c;flex-shrink:0;margin-left:12px;">
+          {{ item.subtotal|floatformat:0 }} сўм
+        </span>
+      </div>
+      {% endfor %}
+
+      <!-- Total -->
+      <div style="display:flex;align-items:center;justify-content:space-between;
+                  padding:16px 0 4px;margin-top:8px;border-top:2px solid rgba(227,30,36,.3);">
+        <span style="font-size:14px;font-weight:700;">Jami to'lov</span>
+        <span style="font-size:22px;font-weight:900;color:#e74c3c;">
+          {{ original.total_price|floatformat:0 }} сўм
+        </span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── DIVIDER ── -->
+<div style="display:flex;align-items:center;gap:12px;margin:24px 0 20px;">
+  <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
+  <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6c757d;white-space:nowrap;">
+    ✏️ Tahrirlash
+  </span>
+  <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
+</div>
+
+{% endif %}
+<!-- ─── ORIGINAL DJANGO/JAZZMIN FORM (status, delivery_type, note edit) ─── -->
+{{ block.super }}
+{% endblock %}

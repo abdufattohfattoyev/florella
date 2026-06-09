@@ -1,0 +1,125 @@
+/* ═══════════════════════════════════════════════════
+   Florella Admin — Custom Order Styles
+═══════════════════════════════════════════════════ */
+
+/* ── Fieldset cards ── */
+.module.aligned {
+  background: var(--bs-card-bg, #2d303e) !important;
+  border: none !important;
+  border-radius: 14px !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,.18) !important;
+  overflow: hidden;
+  margin-bottom: 14px !important;
+}
+
+.module.aligned h2,
+.module.aligned h3 {
+  background: rgba(255,255,255,.04) !important;
+  border-bottom: 1px solid rgba(255,255,255,.06) !important;
+  padding: 12px 20px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  color: #adb5bd !important;
+  border-radius: 0 !important;
+}
+
+/* ── Form row labels ── */
+.form-row label,
+.form-group label {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #adb5bd !important;
+}
+
+/* ── Select / Input widgets ── */
+.vTextField,
+.vLargeTextField,
+select.form-control,
+.select2-container .select2-selection {
+  border-radius: 10px !important;
+  border: 1.5px solid rgba(255,255,255,.1) !important;
+  font-size: 13px !important;
+}
+
+/* ── Submit row ── */
+.submit-row {
+  background: var(--bs-card-bg, #2d303e) !important;
+  border: none !important;
+  border-radius: 14px !important;
+  padding: 14px 20px !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,.18) !important;
+}
+
+.submit-row input[type=submit],
+.submit-row a.deletelink,
+.submit-row button {
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  padding: 9px 20px !important;
+}
+
+/* ── Inline admin (OrderItems) ── */
+.inline-group {
+  border: none !important;
+  border-radius: 14px !important;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,.18) !important;
+  margin-bottom: 14px !important;
+}
+
+.inline-group h2 {
+  background: rgba(227,30,36,.12) !important;
+  color: #e74c3c !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  padding: 12px 20px !important;
+  border-bottom: 1px solid rgba(227,30,36,.2) !important;
+}
+
+.inline-related .module {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ── History button ── */
+.object-history {
+  border-radius: 10px !important;
+}
+
+/* ── Tabs (Jazzmin horizontal tabs) ── */
+.nav-tabs .nav-link {
+  border-radius: 10px 10px 0 0 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.nav-tabs .nav-link.active {
+  color: #e74c3c !important;
+  border-bottom-color: #e74c3c !important;
+}
+
+/* ── List display: status badges ── */
+.field-status_badge span {
+  font-size: 12px !important;
+}
+
+/* ── Page title ── */
+#content h1 {
+  font-size: 1.2rem !important;
+  font-weight: 800 !important;
+}
+
+/* ── Table hover in order list ── */
+#result_list tr:hover td {
+  background: rgba(227,30,36,.05) !important;
+}
+
+/* ── Responsive tweaks ── */
+@media (max-width: 768px) {
+  .fl-card { padding: 14px 16px; }
+}
