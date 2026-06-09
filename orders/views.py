@@ -31,11 +31,12 @@ def order_create(request):
 
         for entry in cart:
             menu_item = get_object_or_404(MenuItem, pk=entry['id'])
+            cart_price = entry.get('price') or menu_item.price
             OrderItem.objects.create(
                 order=order,
                 menu_item=menu_item,
                 quantity=entry['quantity'],
-                price=menu_item.price,
+                price=cart_price,
             )
 
         order.calculate_total()

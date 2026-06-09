@@ -59,8 +59,8 @@ class OrderAdmin(admin.ModelAdmin):
     @admin.display(description='Тур', ordering='delivery_type')
     def delivery_badge(self, obj):
         if obj.delivery_type == 'delivery':
-            return format_html('<span style="color:#e31e24;font-weight:700;">🛵 Ета</span>')
-        return format_html('<span style="color:#27ae60;font-weight:700;">🍽️ Зал</span>')
+            return format_html('<span style="color:#e31e24;font-weight:700;">🛵 Yetkazib</span>')
+        return format_html('<span style="color:#27ae60;font-weight:700;">🚶 Olib ketish</span>')
 
     @admin.display(description='Манзил / Стол')
     def address_short(self, obj):

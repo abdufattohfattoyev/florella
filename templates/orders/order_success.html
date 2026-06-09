@@ -1,84 +1,174 @@
 {% extends 'base.html' %}
-{% block title %}Буюртма қабул қилинди — Флорелла Кафе{% endblock %}
+{% block title %}Buyurtma qabul qilindi — Florella Cafe{% endblock %}
 
 {% block content %}
-<div class="success-page">
-  <div class="success-card">
+<main style="min-height:100vh;padding-top:76px;padding-bottom:100px;background:#f9f9fe;">
+  <div style="max-width:440px;margin:0 auto;padding:0 16px;">
 
-    <!-- Icon -->
-    <div class="text-center" style="margin-bottom:20px;">
-      <div class="success-icon">✅</div>
-      <h2 style="font-family:'Nunito',sans-serif;font-size:1.5rem;font-weight:900;color:var(--text);margin-bottom:6px;">
-        Буюртма қабул қилинди!
-      </h2>
-      <p style="font-size:.85rem;color:var(--text-3);">
-        Буюртма рақами:
-        <strong style="color:var(--primary);font-size:1rem;">#{{ order.pk }}</strong>
-      </p>
-    </div>
-
-    <!-- Details -->
-    <div style="margin-bottom:18px;">
-      <div class="order-detail-row">
-        <span>Мижоз</span>
-        <span>{{ order.customer_name }}</span>
+    <!-- ── Success header ── -->
+    <div style="text-align:center;padding:28px 0 20px;">
+      <div style="display:inline-flex;align-items:center;justify-content:center;
+                  width:76px;height:76px;border-radius:50%;
+                  background:linear-gradient(135deg,#e8f9ee,#c8f0d8);
+                  box-shadow:0 8px 24px rgba(39,174,96,.2);
+                  margin-bottom:14px;">
+        <span class="material-symbols-outlined"
+              style="font-size:40px;color:#27ae60;font-variation-settings:'FILL' 1;">check_circle</span>
       </div>
-      <div class="order-detail-row">
-        <span>Телефон</span>
-        <span>{{ order.customer_phone }}</span>
-      </div>
-      <div class="order-detail-row">
-        <span>Буюртма тури</span>
-        <span style="font-weight:700;">{{ order.get_delivery_type_display }}</span>
-      </div>
-      {% if order.delivery_type == 'delivery' and order.delivery_address %}
-      <div class="order-detail-row">
-        <span>Манзил</span>
-        <span>{{ order.delivery_address }}</span>
-      </div>
-      {% elif order.table_number %}
-      <div class="order-detail-row">
-        <span>Стол</span>
-        <span>#{{ order.table_number }}</span>
-      </div>
-      {% endif %}
-      <div class="order-detail-row">
-        <span>Ҳолат</span>
-        <span style="color:var(--primary);font-weight:800;">{{ order.get_status_display }}</span>
+      <h1 style="font-size:20px;font-weight:900;color:#1a1c1f;margin-bottom:10px;line-height:1.2;">
+        Buyurtmangiz qabul qilindi!
+      </h1>
+      <div style="display:inline-flex;align-items:center;gap:6px;
+                  background:#fff0f1;border:1.5px solid #f5c8c9;
+                  padding:7px 18px;border-radius:999px;">
+        <span class="material-symbols-outlined" style="font-size:15px;color:#e31e24;">tag</span>
+        <span style="font-size:14px;font-weight:800;color:#e31e24;">Buyurtma № {{ order.pk }}</span>
       </div>
     </div>
 
-    <!-- Items -->
-    <div style="background:var(--bg);border-radius:var(--r-sm);padding:14px;
-                margin-bottom:18px;border:1px solid var(--border);">
-      <p style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;
-                color:var(--text);margin-bottom:10px;">Буюртма таркиби</p>
+    <!-- ── Status ── -->
+    {% if order.delivery_type == 'delivery' %}
+    <div style="display:flex;align-items:center;gap:12px;
+                background:#fff;border-radius:18px;padding:14px 16px;
+                box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:10px;">
+      <div style="width:40px;height:40px;border-radius:12px;background:#eaf4fd;
+                  display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span class="material-symbols-outlined" style="font-size:20px;color:#3498db;font-variation-settings:'FILL' 1;">delivery_dining</span>
+      </div>
+      <div style="flex:1;">
+        <p style="font-size:11px;color:#5c5b5b;margin-bottom:2px;">Holat</p>
+        <p style="font-size:14px;font-weight:800;color:#3498db;">{{ order.get_status_display }}</p>
+      </div>
+      <div style="background:#eaf4fd;padding:6px 12px;border-radius:10px;">
+        <span style="font-size:11px;font-weight:700;color:#3498db;">Yetkazib berish</span>
+      </div>
+    </div>
+    {% else %}
+    <div style="display:flex;align-items:center;gap:12px;
+                background:#fff;border-radius:18px;padding:14px 16px;
+                box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:10px;">
+      <div style="width:40px;height:40px;border-radius:12px;background:#e8f9ee;
+                  display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span class="material-symbols-outlined" style="font-size:20px;color:#27ae60;font-variation-settings:'FILL' 1;">store</span>
+      </div>
+      <div style="flex:1;">
+        <p style="font-size:11px;color:#5c5b5b;margin-bottom:2px;">Holat</p>
+        <p style="font-size:14px;font-weight:800;color:#27ae60;">{{ order.get_status_display }}</p>
+      </div>
+      <div style="background:#e8f9ee;padding:6px 12px;border-radius:10px;">
+        <span style="font-size:11px;font-weight:700;color:#27ae60;">Olib ketish</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Customer info ── -->
+    <div style="background:#fff;border-radius:20px;padding:16px;
+                box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:10px;">
+      <p style="font-size:10px;font-weight:700;color:#5c5b5b;text-transform:uppercase;
+                letter-spacing:.07em;margin-bottom:12px;">Buyurtmachi</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:#ededf2;
+                      display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span class="material-symbols-outlined" style="font-size:18px;color:#5d3f3c;">person</span>
+          </div>
+          <div>
+            <p style="font-size:10px;color:#5c5b5b;">Ism</p>
+            <p style="font-size:14px;font-weight:700;color:#1a1c1f;">{{ order.customer_name }}</p>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:#ededf2;
+                      display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span class="material-symbols-outlined" style="font-size:18px;color:#5d3f3c;">phone</span>
+          </div>
+          <div>
+            <p style="font-size:10px;color:#5c5b5b;">Telefon</p>
+            <p style="font-size:14px;font-weight:700;color:#1a1c1f;">{{ order.customer_phone }}</p>
+          </div>
+        </div>
+
+        {% if order.delivery_type == 'delivery' %}
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:#fff0f1;
+                      display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;">
+            <span class="material-symbols-outlined" style="font-size:18px;color:#e31e24;">location_on</span>
+          </div>
+          <div style="flex:1;">
+            <p style="font-size:10px;color:#5c5b5b;">Yetkazish manzili</p>
+            <p style="font-size:14px;font-weight:700;color:#1a1c1f;line-height:1.4;">{{ order.delivery_address|default:"—" }}</p>
+          </div>
+        </div>
+        {% else %}
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:#e8f9ee;
+                      display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span class="material-symbols-outlined" style="font-size:18px;color:#27ae60;">storefront</span>
+          </div>
+          <div>
+            <p style="font-size:10px;color:#5c5b5b;">Buyurtma turi</p>
+            <p style="font-size:14px;font-weight:700;color:#27ae60;">Restorandan olib ketish</p>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    <!-- ── Order items ── -->
+    <div style="background:#fff;border-radius:20px;padding:16px;
+                box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:10px;">
+      <p style="font-size:10px;font-weight:700;color:#5c5b5b;text-transform:uppercase;
+                letter-spacing:.07em;margin-bottom:12px;">Buyurtma tarkibi</p>
+
       {% for item in order.items.all %}
-      <div class="order-detail-row">
-        <span>{{ item.menu_item.name }} × {{ item.quantity }}</span>
-        <span style="color:var(--primary);font-weight:700;">{{ item.subtotal|floatformat:0 }} сўм</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;
+                  padding:9px 0;border-bottom:1px solid rgba(231,189,184,.3);">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;
+                       min-width:24px;height:24px;background:#e31e24;color:#fff;
+                       font-size:11px;font-weight:800;border-radius:7px;flex-shrink:0;">{{ item.quantity }}</span>
+          <span style="font-size:13px;font-weight:600;color:#1a1c1f;
+                       overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.menu_item.name }}</span>
+        </div>
+        <span style="font-size:13px;font-weight:800;color:#ba0013;flex-shrink:0;margin-left:8px;">
+          {{ item.subtotal|floatformat:0 }} сўм
+        </span>
       </div>
       {% endfor %}
-      <div class="order-detail-row"
-           style="border-top:2px solid var(--border);margin-top:6px;padding-top:10px;">
-        <span style="font-family:'Nunito',sans-serif;font-weight:800;color:var(--text);">Жами тўлов</span>
-        <span style="color:var(--primary);font-size:1rem;font-weight:900;">{{ order.total_price|floatformat:0 }} сўм</span>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;
+                  padding-top:14px;margin-top:2px;">
+        <span style="font-size:14px;font-weight:700;color:#1a1c1f;">Jami to'lov</span>
+        <span style="font-size:22px;font-weight:900;color:#e31e24;">{{ order.total_price|floatformat:0 }} сўм</span>
       </div>
     </div>
 
     {% if order.note %}
-    <p style="font-size:.82rem;color:var(--text-3);margin-bottom:16px;
-              background:var(--bg);padding:10px 14px;border-radius:var(--r-xs);">
-      <strong style="color:var(--text-2);">Изоҳ:</strong> {{ order.note }}
-    </p>
+    <div style="background:#fff;border-radius:18px;padding:14px 16px;
+                box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:10px;
+                display:flex;align-items:flex-start;gap:10px;">
+      <span class="material-symbols-outlined" style="font-size:18px;color:#f39c12;flex-shrink:0;margin-top:1px;">sticky_note_2</span>
+      <div>
+        <p style="font-size:10px;font-weight:700;color:#5c5b5b;margin-bottom:3px;">Izoh</p>
+        <p style="font-size:13px;color:#1a1c1f;line-height:1.45;">{{ order.note }}</p>
+      </div>
+    </div>
     {% endif %}
 
-    <a href="{% url 'menu:menu_list' %}" class="btn-checkout"
-       style="text-align:center;display:flex;text-decoration:none;">
-      <i class="fas fa-arrow-left"></i>
-      Менюга қайтиш
+    <!-- ── Back button ── -->
+    <a href="{% url 'menu:menu_list' %}"
+       style="display:flex;align-items:center;justify-content:center;gap:8px;
+              background:#e31e24;color:#fff;padding:16px;border-radius:18px;
+              text-decoration:none;font-size:15px;font-weight:700;
+              box-shadow:0 4px 20px rgba(227,30,36,.3);
+              margin-top:4px;">
+      <span class="material-symbols-outlined" style="font-size:20px;">storefront</span>
+      Menuga qaytish
     </a>
 
   </div>
-</div>
+</main>
 {% endblock %}

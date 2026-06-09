@@ -14,7 +14,7 @@ class Order(models.Model):
     ]
     DELIVERY_TYPE_CHOICES = [
         ('delivery', 'Yetkazib berish'),
-        ('dine_in', 'Restoranda'),
+        ('dine_in', 'Olib ketish'),
     ]
 
     customer_name = models.CharField(max_length=200, verbose_name='Mijoz ismi')
@@ -45,7 +45,7 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     menu_item = models.ForeignKey(MenuItem, on_delete=models.PROTECT, verbose_name='Taom')
     quantity = models.PositiveIntegerField(default=1, verbose_name='Miqdor')
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Narx')
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name='Narx')
 
     class Meta:
         verbose_name = 'Buyurtma elementi'
@@ -56,4 +56,4 @@ class OrderItem(models.Model):
 
     @property
     def subtotal(self):
-        return self.price * self.quantity
+        return (self.price or 0) * self.quantity
