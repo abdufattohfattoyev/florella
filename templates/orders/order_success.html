@@ -27,7 +27,16 @@
         <span>Телефон</span>
         <span>{{ order.customer_phone }}</span>
       </div>
-      {% if order.table_number %}
+      <div class="order-detail-row">
+        <span>Буюртма тури</span>
+        <span style="font-weight:700;">{{ order.get_delivery_type_display }}</span>
+      </div>
+      {% if order.delivery_type == 'delivery' and order.delivery_address %}
+      <div class="order-detail-row">
+        <span>Манзил</span>
+        <span>{{ order.delivery_address }}</span>
+      </div>
+      {% elif order.table_number %}
       <div class="order-detail-row">
         <span>Стол</span>
         <span>#{{ order.table_number }}</span>

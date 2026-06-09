@@ -221,7 +221,38 @@
                class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
                style="background:#ededf2;color:#1a1c1f;">
       </div>
+      <!-- Buyurtma turi -->
       <div>
+        <label class="block text-xs font-semibold mb-1.5" style="color:#5c5b5b;">Буюртма тури <span style="color:#e31e24;">*</span></label>
+        <div style="display:flex;gap:8px;">
+          <label id="lblDelivery"
+                 style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+                        padding:11px;border-radius:14px;cursor:pointer;
+                        border:2px solid #e31e24;background:#fff0f1;transition:all .15s;">
+            <input type="radio" name="delivery_type" value="delivery" checked style="display:none;">
+            <span class="material-symbols-outlined" style="font-size:18px;color:#e31e24;">delivery_dining</span>
+            <span style="font-size:13px;font-weight:700;color:#e31e24;">Ета</span>
+          </label>
+          <label id="lblDineIn"
+                 style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+                        padding:11px;border-radius:14px;cursor:pointer;
+                        border:2px solid #e7bdb8;background:transparent;transition:all .15s;">
+            <input type="radio" name="delivery_type" value="dine_in" style="display:none;">
+            <span class="material-symbols-outlined" style="font-size:18px;color:#5d3f3c;">table_restaurant</span>
+            <span style="font-size:13px;font-weight:700;color:#5d3f3c;">Зал</span>
+          </label>
+        </div>
+      </div>
+      <!-- Yetkazish manzili -->
+      <div id="fieldAddress">
+        <label class="block text-xs font-semibold mb-1.5" style="color:#5c5b5b;">Манзил <span style="color:#e31e24;">*</span></label>
+        <textarea name="delivery_address" rows="2"
+                  placeholder="Кўча, уй, хонадон рақами…"
+                  class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent resize-none"
+                  style="background:#ededf2;color:#1a1c1f;"></textarea>
+      </div>
+      <!-- Stol (dine-in) -->
+      <div id="fieldTable" style="display:none;">
         <label class="block text-xs font-semibold mb-1.5" style="color:#5c5b5b;">Стол <span style="font-weight:400;opacity:.6;">(ихтиёрий)</span></label>
         <input type="number" name="table_number" placeholder="№" min="1"
                class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
@@ -278,8 +309,45 @@ function openOrderModal(){
     b.style.background='rgba(0,0,0,.5)';
     p.style.transform='translateY(0)';
     document.body.style.overflow='hidden';
+    /* Geolokatsiya manzilini avtomatik to'ldirish */
+    try{
+      var saved=sessionStorage.getItem('florella_addr');
+      var addrEl=document.querySelector('[name="delivery_address"]');
+      if(saved && addrEl && !addrEl.value) addrEl.value=saved;
+    }catch(e){}
   },320);
 }
+
+/* ── Delivery type toggle ── */
+(function(){
+  var lblD=document.getElementById('lblDelivery');
+  var lblI=document.getElementById('lblDineIn');
+  var fAddr=document.getElementById('fieldAddress');
+  var fTbl=document.getElementById('fieldTable');
+  if(!lblD||!lblI) return;
+  function setType(t){
+    var isD=t==='delivery';
+    /* Delivery label */
+    lblD.style.borderColor  = isD?'#e31e24':'#e7bdb8';
+    lblD.style.background   = isD?'#fff0f1':'transparent';
+    lblD.querySelector('.material-symbols-outlined').style.color = isD?'#e31e24':'#5d3f3c';
+    lblD.querySelector('span:last-child').style.color = isD?'#e31e24':'#5d3f3c';
+    /* Dine-in label */
+    lblI.style.borderColor  = isD?'#e7bdb8':'#e31e24';
+    lblI.style.background   = isD?'transparent':'#fff0f1';
+    lblI.querySelector('.material-symbols-outlined').style.color = isD?'#5d3f3c':'#e31e24';
+    lblI.querySelector('span:last-child').style.color = isD?'#5d3f3c':'#e31e24';
+    /* Fields */
+    if(fAddr) fAddr.style.display = isD?'':'none';
+    if(fTbl)  fTbl.style.display  = isD?'none':'';
+    /* Radios */
+    document.querySelectorAll('[name="delivery_type"]').forEach(function(r){
+      r.checked = r.value===t;
+    });
+  }
+  lblD.addEventListener('click',function(){ setType('delivery'); });
+  lblI.addEventListener('click',function(){ setType('dine_in'); });
+})();
 function closeOrderModal(){
   var m=document.getElementById('orderModal'),p=document.getElementById('orderPanel'),b=document.getElementById('orderBackdrop');
   b.style.background='transparent';

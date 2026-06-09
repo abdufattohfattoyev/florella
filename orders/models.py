@@ -8,12 +8,19 @@ class Order(models.Model):
         ('confirmed', 'Tasdiqlandi'),
         ('preparing', 'Tayyorlanmoqda'),
         ('ready', 'Tayyor'),
+        ('on_the_way', "Yo'lda"),
         ('delivered', 'Yetkazildi'),
         ('cancelled', 'Bekor qilindi'),
+    ]
+    DELIVERY_TYPE_CHOICES = [
+        ('delivery', 'Yetkazib berish'),
+        ('dine_in', 'Restoranda'),
     ]
 
     customer_name = models.CharField(max_length=200, verbose_name='Mijoz ismi')
     customer_phone = models.CharField(max_length=20, verbose_name='Telefon')
+    delivery_type = models.CharField(max_length=10, choices=DELIVERY_TYPE_CHOICES, default='delivery', verbose_name='Buyurtma turi')
+    delivery_address = models.TextField(blank=True, default='', verbose_name='Yetkazish manzili')
     table_number = models.PositiveIntegerField(blank=True, null=True, verbose_name='Stol raqami')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new', verbose_name='Holat')
     note = models.TextField(blank=True, verbose_name='Izoh')

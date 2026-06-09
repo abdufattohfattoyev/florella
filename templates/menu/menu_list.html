@@ -306,12 +306,12 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
       <div>
         <p style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Иш вақти</p>
-        <p style="font-size:12px;color:rgba(255,255,255,.65);margin-bottom:4px;">Дш–Шб: 10:00–23:00</p>
-        <p style="font-size:12px;color:rgba(255,255,255,.65);">Якшанба: 10:00–22:00</p>
+        <p style="font-size:12px;color:rgba(255,255,255,.65);margin-bottom:4px;">Дш–Шб: 11:00–23:00</p>
+        <p style="font-size:12px;color:rgba(255,255,255,.65);">Якшанба: 11:00–23:00</p>
       </div>
       <div>
         <p style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Алоқа</p>
-        <p style="font-size:12px;color:rgba(255,255,255,.65);margin-bottom:4px;">+998 90 000 00 00</p>
+        <p style="font-size:12px;color:rgba(255,255,255,.65);margin-bottom:4px;">+998 99 242 06 05</p>
         <p style="font-size:12px;color:rgba(255,255,255,.65);">@florella.cafe</p>
       </div>
     </div>
@@ -674,8 +674,10 @@ function showToast(name){
   var activeItem = null, qty = 1, mult = 1;
 
   function curPrice(){
-    var activeBtn = document.querySelector('.size-btn.active');
-    if(activeBtn && activeBtn.dataset.fixedPrice) return +activeBtn.dataset.fixedPrice;
+    if(activeItem && activeItem.category === 'pizzalar'){
+      var activeBtn = document.querySelector('.size-btn.active');
+      if(activeBtn && activeBtn.dataset.fixedPrice) return +activeBtn.dataset.fixedPrice;
+    }
     return Math.round(activeItem.basePrice * mult);
   }
   function updTotal(){ if(totalEl) totalEl.textContent = fmt(curPrice() * qty); }

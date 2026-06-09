@@ -55,7 +55,7 @@ function updateCartUI() {
         <div style="display:flex;align-items:center;gap:12px;padding:12px 0;
                     border-bottom:1px solid rgba(231,189,184,.45);">
           <!-- Rasm -->
-          <div style="width:56px;height:56px;border-radius:12px;
+          <div style="width:52px;height:52px;border-radius:12px;
                       background:#f3f3f8;flex-shrink:0;overflow:hidden;
                       display:flex;align-items:center;justify-content:center;">
             ${_cartItemThumb(item)}
@@ -73,9 +73,16 @@ function updateCartUI() {
           <div style="display:flex;align-items:center;gap:0;
                       background:#f3f3f8;border-radius:12px;padding:4px;flex-shrink:0;">
             <button onclick="changeQty(${item.id},${item.price},-1)"
+                    title="${item.quantity === 1 ? "O'chirish" : 'Kamaytirish'}"
                     style="width:30px;height:30px;border-radius:8px;border:none;
-                           background:transparent;cursor:pointer;font-size:1.1rem;font-weight:700;
-                           display:flex;align-items:center;justify-content:center;color:#1a1c1f;">−</button>
+                           background:${item.quantity === 1 ? '#ffe4e4' : 'transparent'};
+                           cursor:pointer;display:flex;align-items:center;justify-content:center;
+                           color:${item.quantity === 1 ? '#e31e24' : '#1a1c1f'};">
+              ${item.quantity === 1
+                ? '<span class="material-symbols-outlined" style="font-size:16px;">delete</span>'
+                : '<span style="font-size:1.2rem;font-weight:700;line-height:1;">−</span>'
+              }
+            </button>
             <span style="font-weight:800;font-size:.9rem;min-width:22px;text-align:center;color:#1a1c1f;">${item.quantity}</span>
             <button onclick="changeQty(${item.id},${item.price},1)"
                     style="width:30px;height:30px;border-radius:8px;background:#e31e24;border:none;

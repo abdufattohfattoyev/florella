@@ -10,6 +10,8 @@ def order_create(request):
     if request.method == 'POST':
         customer_name = request.POST.get('customer_name')
         customer_phone = request.POST.get('customer_phone')
+        delivery_type = request.POST.get('delivery_type', 'delivery')
+        delivery_address = request.POST.get('delivery_address', '')
         table_number = request.POST.get('table_number') or None
         note = request.POST.get('note', '')
         cart = json.loads(request.POST.get('cart', '[]'))
@@ -21,6 +23,8 @@ def order_create(request):
         order = Order.objects.create(
             customer_name=customer_name,
             customer_phone=customer_phone,
+            delivery_type=delivery_type,
+            delivery_address=delivery_address,
             table_number=table_number,
             note=note,
         )
