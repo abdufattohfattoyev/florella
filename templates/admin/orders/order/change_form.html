@@ -94,11 +94,28 @@
           <div class="fl-icon-box" style="background:rgba(231,76,60,.15);margin-top:2px;">
             <i class="fas fa-map-marker-alt" style="color:#e74c3c;font-size:14px;"></i>
           </div>
-          <div>
+          <div style="flex:1;min-width:0;">
             <p class="fl-label mb-0">Yetkazish manzili</p>
             <p class="fl-val" style="line-height:1.45;">{{ original.delivery_address|default:"—" }}</p>
+            {% if original.google_maps_url %}
+            <a href="{{ original.google_maps_url }}" target="_blank" rel="noopener"
+               style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;
+                      background:{% if original.latitude %}#e31e24{% else %}#6c757d{% endif %};color:#fff;
+                      font-size:12px;font-weight:700;padding:7px 14px;border-radius:10px;
+                      text-decoration:none;">
+              <i class="fas fa-map-marked-alt"></i>
+              {% if original.latitude %}Google Maps — aniq nuqta{% else %}Google Maps — manzil bo'yicha{% endif %}
+            </a>
+            {% endif %}
           </div>
         </div>
+
+        {% if original.osm_embed_url %}
+        <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.1);">
+          <iframe src="{{ original.osm_embed_url }}"
+                  style="width:100%;height:220px;border:0;display:block;"></iframe>
+        </div>
+        {% endif %}
         {% else %}
         <div class="d-flex align-items-center gap-3">
           <div class="fl-icon-box" style="background:rgba(39,174,96,.12);">

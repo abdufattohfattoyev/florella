@@ -26,6 +26,8 @@ class Order(models.Model):
     delivery_type = models.CharField(max_length=10, choices=DELIVERY_TYPE_CHOICES, default='delivery', verbose_name='Buyurtma turi')
     payment_type = models.CharField(max_length=10, choices=PAYMENT_TYPE_CHOICES, default='cash', verbose_name="To'lov turi")
     delivery_address = models.TextField(blank=True, default='', verbose_name='Yetkazish manzili')
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name='Kenglik (GPS)')
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name='Uzunlik (GPS)')
     table_number = models.PositiveIntegerField(blank=True, null=True, verbose_name='Stol raqami')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new', verbose_name='Holat')
     note = models.TextField(blank=True, verbose_name='Izoh')
@@ -44,6 +46,26 @@ class Order(models.Model):
     def calculate_total(self):
         self.total_price = sum(item.subtotal for item in self.items.all())
         self.save()
+
+    @property
+    def google_maps_url(self):
+        if self.latitude is not None and self.longitude is not None:
+            return f"https://www.google.com/maps?q={self.latitude},{self.longitude}"
+        if self.delivery_address:
+            from urllib.parse import quote
+            return f"https://www.google.com/maps/search/?api=1&query={quote(self.delivery_address)}"
+        return ''
+
+    @property
+    def osm_embed_url(self):
+        if self.latitude is None or self.longitude is None:
+            return ''
+        lat, lon = float(self.latitude), float(self.longitude)
+        return (
+            "https://www.openstreetmap.org/export/embed.html"
+            f"?bbox={lon - 0.005}%2C{lat - 0.003}%2C{lon + 0.005}%2C{lat + 0.003}"
+            f"&layer=mapnik&marker={lat}%2C{lon}"
+        )
 
 
 class OrderItem(models.Model):

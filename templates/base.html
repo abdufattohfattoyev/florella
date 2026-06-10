@@ -217,7 +217,8 @@
       </div>
       <div>
         <label class="block text-xs font-semibold mb-1.5" style="color:#5c5b5b;">Телефон <span style="color:#e31e24;">*</span></label>
-        <input type="tel" name="customer_phone" required placeholder="+998 90 123 45 67"
+        <input type="tel" name="customer_phone" id="phoneInput" required
+               placeholder="+998 90 123 45 67" value="+998 " inputmode="numeric"
                class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
                style="background:#ededf2;color:#1a1c1f;">
       </div>
@@ -246,10 +247,27 @@
       <!-- Yetkazish manzili -->
       <div id="fieldAddress">
         <label class="block text-xs font-semibold mb-1.5" style="color:#5c5b5b;">Yetkazish manzili <span style="color:#e31e24;">*</span></label>
-        <textarea name="delivery_address" rows="2"
-                  placeholder="Кўча, уй, хонадон рақами…"
-                  class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent resize-none"
-                  style="background:#ededf2;color:#1a1c1f;"></textarea>
+        <div class="flex gap-2">
+          <textarea id="streetInput" rows="2"
+                    placeholder="Кўча, маҳалла…"
+                    class="flex-1 rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent resize-none"
+                    style="background:#ededf2;color:#1a1c1f;min-width:0;"></textarea>
+          <button type="button" id="gpsBtn" onclick="detectModalLocation()"
+                  class="flex items-center justify-center rounded-2xl active:scale-95 transition-transform flex-shrink-0"
+                  style="width:48px;background:#fff0f1;border:2px solid #e31e24;cursor:pointer;"
+                  title="GPS orqali aniqlash">
+            <span id="gpsBtnIcon" class="material-symbols-outlined" style="font-size:20px;color:#e31e24;">my_location</span>
+          </button>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <input type="text" id="houseInput" placeholder="Uy №" inputmode="numeric"
+                 class="rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+                 style="background:#ededf2;color:#1a1c1f;width:40%;min-width:0;">
+          <input type="text" id="aptInput" placeholder="Xonadon / podyezd"
+                 class="rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+                 style="background:#ededf2;color:#1a1c1f;width:60%;min-width:0;">
+        </div>
+        <p id="gpsHint" class="text-xs mt-1.5 hidden" style="color:#5c5b5b;"></p>
       </div>
       <!-- Olib ketish info -->
       <div id="fieldPickup" style="display:none;">
@@ -290,6 +308,9 @@
                   style="background:#ededf2;color:#1a1c1f;"></textarea>
       </div>
       <input type="hidden" name="cart" id="cartDataInput">
+      <input type="hidden" name="delivery_address" id="fullAddressInput">
+      <input type="hidden" name="latitude" id="latInput">
+      <input type="hidden" name="longitude" id="lonInput">
       <div id="modalOrderSummary" class="rounded-2xl p-4 space-y-1" style="background:#ededf2;"></div>
       <div class="flex gap-3">
         <button type="button" onclick="closeOrderModal()"
@@ -334,14 +355,141 @@ function openOrderModal(){
     b.style.background='rgba(0,0,0,.5)';
     p.style.transform='translateY(0)';
     document.body.style.overflow='hidden';
-    /* Geolokatsiya manzilini avtomatik to'ldirish */
+    /* Geolokatsiya manzili + koordinatalarni avtomatik to'ldirish */
     try{
       var saved=sessionStorage.getItem('florella_addr');
-      var addrEl=document.querySelector('[name="delivery_address"]');
-      if(saved && addrEl && !addrEl.value) addrEl.value=saved;
+      var st=document.getElementById('streetInput');
+      if(saved && st && !st.value) st.value=saved;
+      var lat=sessionStorage.getItem('florella_lat');
+      var lon=sessionStorage.getItem('florella_lon');
+      if(lat) document.getElementById('latInput').value=lat;
+      if(lon) document.getElementById('lonInput').value=lon;
     }catch(e){}
   },320);
 }
+
+/* ── Modal ichida GPS: uy raqamigacha aniqlash ── */
+function detectModalLocation(){
+  var icon=document.getElementById('gpsBtnIcon');
+  var hint=document.getElementById('gpsHint');
+  var st=document.getElementById('streetInput');
+  function showHint(t,c){ hint.textContent=t; hint.style.color=c||'#5c5b5b'; hint.classList.remove('hidden'); }
+  if(!navigator.geolocation){ showHint('Brauzer GPS ni qo\'llab-quvvatlamaydi'); return; }
+  icon.textContent='sync';
+  icon.style.animation='flspin 1s linear infinite';
+  showHint('Aniqlanmoqda…');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude, lon=pos.coords.longitude;
+    document.getElementById('latInput').value=lat;
+    document.getElementById('lonInput').value=lon;
+    try{
+      sessionStorage.setItem('florella_lat',lat);
+      sessionStorage.setItem('florella_lon',lon);
+    }catch(e){}
+    fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&addressdetails=1&lat='+lat+'&lon='+lon+'&accept-language=uz,ru')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var a=data.address||{};
+      var street=a.road||a.pedestrian||a.residential||'';
+      var parts=[];
+      if(street) parts.push(street);
+      if(a.suburb||a.neighbourhood||a.quarter) parts.push(a.suburb||a.neighbourhood||a.quarter);
+      if(a.city||a.town||a.village) parts.push(a.city||a.town||a.village);
+      var addr=parts.length?parts.slice(0,3).join(', '):(data.display_name||'').split(',').slice(0,3).join(', ');
+      if(addr){ st.value=addr; try{sessionStorage.setItem('florella_addr',addr);}catch(e){} }
+      icon.textContent='my_location'; icon.style.animation='';
+      var hi=document.getElementById('houseInput');
+      if(a.house_number){
+        hi.value=a.house_number;
+        showHint('✓ Manzil aniqlandi — uy raqamini tekshiring','#27ae60');
+      } else if(addr){
+        /* Xaritada uy raqami yo'q — mijoz o'zi kiritadi */
+        showHint('✓ Ko\'cha aniqlandi. Uy raqamini kiriting 👇','#e31e24');
+        hi.focus();
+        hi.style.borderColor='#e31e24';
+      } else {
+        showHint('Manzilni qo\'lda yozing');
+      }
+    })
+    .catch(function(){
+      icon.textContent='my_location'; icon.style.animation='';
+      showHint('GPS saqlandi ('+lat.toFixed(5)+', '+lon.toFixed(5)+') — manzilni qo\'lda yozing');
+    });
+  },function(err){
+    icon.textContent='location_off'; icon.style.animation='';
+    showHint(err.code===1?'GPS ruxsati berilmadi — manzilni qo\'lda yozing':'Manzil aniqlanmadi, qayta urinib ko\'ring');
+  },{timeout:10000,enableHighAccuracy:true});
+}
+
+/* ── Telefon: doim +998 prefiks + avto-format ── */
+(function(){
+  var ph=document.getElementById('phoneInput');
+  if(!ph) return;
+  function fmt(){
+    var d=ph.value.replace(/\D/g,'');
+    if(d.indexOf('998')===0) d=d.slice(3);
+    d=d.slice(0,9);
+    var out='+998';
+    if(d.length>0) out+=' '+d.slice(0,2);
+    if(d.length>2) out+=' '+d.slice(2,5);
+    if(d.length>5) out+=' '+d.slice(5,7);
+    if(d.length>7) out+=' '+d.slice(7,9);
+    ph.value=out;
+  }
+  ph.addEventListener('input',fmt);
+  ph.addEventListener('focus',function(){
+    if(!ph.value || ph.value.replace(/\D/g,'').length<3) ph.value='+998 ';
+    setTimeout(function(){ph.setSelectionRange(ph.value.length,ph.value.length);},0);
+  });
+  ph.addEventListener('keydown',function(e){
+    /* +998 prefiksini o'chirishga yo'l qo'ymaslik */
+    if((e.key==='Backspace'||e.key==='Delete') && ph.selectionStart<=5 && ph.selectionEnd<=5) e.preventDefault();
+  });
+})();
+
+/* ── Forma yuborishda: tekshirish + to'liq manzilni birlashtirish ── */
+(function(){
+  var form=document.querySelector('#orderModal form');
+  if(!form) return;
+  /* flspin keyframes */
+  var sty=document.createElement('style');
+  sty.textContent='@keyframes flspin{to{transform:rotate(360deg)}}';
+  document.head.appendChild(sty);
+
+  form.addEventListener('submit',function(e){
+    var ph=document.getElementById('phoneInput');
+    if(ph && ph.value.replace(/\D/g,'').length<12){
+      e.preventDefault();
+      ph.focus();
+      ph.style.borderColor='#e31e24';
+      return;
+    }
+    var dt=document.querySelector('[name="delivery_type"]:checked');
+    var isDelivery=!dt||dt.value==='delivery';
+    var street=(document.getElementById('streetInput').value||'').trim();
+    var house=(document.getElementById('houseInput').value||'').trim();
+    var apt=(document.getElementById('aptInput').value||'').trim();
+    if(isDelivery && !street){
+      e.preventDefault();
+      var st=document.getElementById('streetInput');
+      st.focus();
+      st.style.borderColor='#e31e24';
+      return;
+    }
+    /* To'liq manzil: ko'cha + uy + xonadon */
+    var full='';
+    if(isDelivery){
+      full=street;
+      if(house) full+=', '+house+'-uy';
+      if(apt)   full+=', '+apt+'-xonadon';
+    }
+    document.getElementById('fullAddressInput').value=full;
+    if(!isDelivery){
+      document.getElementById('latInput').value='';
+      document.getElementById('lonInput').value='';
+    }
+  });
+})();
 
 /* ── Delivery type toggle ── */
 (function(){

@@ -17,20 +17,20 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display   = ('id', 'customer_name', 'customer_phone', 'delivery_badge',
-                      'address_short', 'status_badge', 'total_fmt', 'created_at')
-    list_filter    = ('status', 'delivery_type', 'created_at')
+    list_display   = ('id', 'customer_name', 'phone_link', 'delivery_badge',
+                      'location_btn', 'status_badge', 'total_fmt', 'created_at')
+    list_filter    = ('status', 'delivery_type', 'payment_type', 'created_at')
     list_editable  = ()
     search_fields  = ('customer_name', 'customer_phone', 'delivery_address')
-    readonly_fields = ('total_price', 'created_at', 'updated_at')
+    readonly_fields = ('total_price', 'created_at', 'updated_at', 'latitude', 'longitude')
     inlines        = [OrderItemInline]
     date_hierarchy = 'created_at'
     list_per_page  = 20
     ordering       = ('-created_at',)
 
     fieldsets = (
-        ('Holat va tur', {'fields': ('status', 'delivery_type')}),
-        ('Mijoz ma\'lumotlari', {'fields': ('customer_name', 'customer_phone', 'delivery_address')}),
+        ('Holat va tur', {'fields': ('status', 'delivery_type', 'payment_type')}),
+        ('Mijoz ma\'lumotlari', {'fields': ('customer_name', 'customer_phone', 'delivery_address', 'latitude', 'longitude')}),
         ('Qo\'shimcha', {'fields': ('note', 'total_price'), 'classes': ('collapse',)}),
         ('Vaqt', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
     )
@@ -63,14 +63,35 @@ class OrderAdmin(admin.ModelAdmin):
             return format_html('<span style="color:#e31e24;font-weight:700;">🛵 Yetkazib</span>')
         return format_html('<span style="color:#27ae60;font-weight:700;">🚶 Olib ketish</span>')
 
+    @admin.display(description='Телефон', ordering='customer_phone')
+    def phone_link(self, obj):
+        digits = ''.join(ch for ch in obj.customer_phone if ch.isdigit() or ch == '+')
+        return format_html(
+            '<a href="tel:{}" style="font-weight:600;white-space:nowrap;">📞 {}</a>',
+            digits, obj.customer_phone
+        )
+
     @admin.display(description='Манзил / Стол')
-    def address_short(self, obj):
-        if obj.delivery_type == 'delivery':
-            addr = obj.delivery_address or '—'
-            return format_html('<span title="{}">{}</span>', addr, addr[:40] + ('…' if len(addr) > 40 else ''))
-        if obj.table_number:
-            return format_html('Стол №{}', obj.table_number)
-        return '—'
+    def location_btn(self, obj):
+        if obj.delivery_type != 'delivery':
+            if obj.table_number:
+                return format_html('Стол №{}', obj.table_number)
+            return format_html('<span style="color:#27ae60;font-weight:600;">🚶 Олиб кетади</span>')
+        url = obj.google_maps_url
+        addr = obj.delivery_address or 'Картада кўриш'
+        if len(addr) > 35:
+            addr = addr[:32] + '…'
+        if not url:
+            return '—'
+        # GPS bor — aniq nuqta; faqat matn — qidiruv havolasi
+        precise = obj.latitude is not None and obj.longitude is not None
+        return format_html(
+            '<a href="{}" target="_blank" rel="noopener" title="{}"'
+            ' style="display:inline-flex;align-items:center;gap:4px;background:{};color:#fff;'
+            'font-weight:600;font-size:12px;padding:4px 10px;border-radius:8px;'
+            'text-decoration:none;white-space:nowrap;">📍 {}</a>',
+            url, obj.delivery_address or '', '#e31e24' if precise else '#7f8c8d', addr
+        )
 
     def get_list_display_links(self, request, list_display):
         return ('id', 'customer_name')

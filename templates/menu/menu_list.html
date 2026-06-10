@@ -469,31 +469,41 @@ function requestLocation(){
     function(pos){
       var lat = pos.coords.latitude;
       var lon = pos.coords.longitude;
-      /* Nominatim reverse geocoding — bepul, API key shart emas */
-      fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lon+'&accept-language=uz,ru', {
+      /* Nominatim reverse geocoding — zoom=18 bino darajasida aniqlik (uy raqami) */
+      fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&addressdetails=1&lat='+lat+'&lon='+lon+'&accept-language=uz,ru', {
         headers: { 'Accept-Language': 'uz,ru' }
       })
       .then(function(r){ return r.json(); })
       .then(function(data){
         var a = data.address || {};
-        /* Qisqa manzil qurish */
+        /* Aniq manzil: ko'cha + uy raqami + mahalla + shahar */
+        var street = a.road || a.pedestrian || a.residential || '';
+        if(street && a.house_number) street += ', ' + a.house_number + '-uy';
         var parts = [];
-        if(a.road || a.pedestrian)    parts.push(a.road || a.pedestrian);
-        if(a.suburb || a.neighbourhood) parts.push(a.suburb || a.neighbourhood);
+        if(street) parts.push(street);
+        if(a.suburb || a.neighbourhood || a.quarter) parts.push(a.suburb || a.neighbourhood || a.quarter);
         if(a.city || a.town || a.village) parts.push(a.city || a.town || a.village);
-        var addr = parts.length ? parts.slice(0,2).join(', ') : (data.display_name||'').split(',').slice(0,2).join(', ');
+        var addr = parts.length ? parts.slice(0,3).join(', ') : (data.display_name||'').split(',').slice(0,3).join(', ');
         txt.textContent  = addr || 'Манзил топилди';
         txt.style.color  = '#1a1c1f';
         icon.textContent = 'my_location';
         icon.style.color = '#e31e24';
         icon.style.animation = '';
-        /* sessionStorage ga saqlash — qayta yuklanishda so'ramaslik */
-        try{ sessionStorage.setItem('florella_addr', addr); } catch(e){}
+        /* sessionStorage — manzil + aniq GPS koordinatalar */
+        try{
+          sessionStorage.setItem('florella_addr', addr);
+          sessionStorage.setItem('florella_lat', lat);
+          sessionStorage.setItem('florella_lon', lon);
+        } catch(e){}
       })
       .catch(function(){
         txt.textContent = lat.toFixed(4)+', '+lon.toFixed(4);
         icon.textContent = 'my_location';
         icon.style.animation = '';
+        try{
+          sessionStorage.setItem('florella_lat', lat);
+          sessionStorage.setItem('florella_lon', lon);
+        } catch(e){}
       });
     },
     function(err){

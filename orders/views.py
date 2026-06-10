@@ -11,8 +11,17 @@ def order_create(request):
         customer_name = request.POST.get('customer_name')
         customer_phone = request.POST.get('customer_phone')
         delivery_type = request.POST.get('delivery_type', 'delivery')
-        delivery_address = request.POST.get('delivery_address', '')
+        delivery_address = request.POST.get('delivery_address', '').strip()
         payment_type = request.POST.get('payment_type', 'cash')
+
+        def _coord(name):
+            try:
+                return round(float(request.POST.get(name, '')), 6)
+            except (TypeError, ValueError):
+                return None
+
+        latitude = _coord('latitude') if delivery_type == 'delivery' else None
+        longitude = _coord('longitude') if delivery_type == 'delivery' else None
         table_number = request.POST.get('table_number') or None
         note = request.POST.get('note', '')
         cart = json.loads(request.POST.get('cart', '[]'))
@@ -26,6 +35,8 @@ def order_create(request):
             customer_phone=customer_phone,
             delivery_type=delivery_type,
             delivery_address=delivery_address,
+            latitude=latitude,
+            longitude=longitude,
             payment_type=payment_type,
             table_number=table_number,
             note=note,
