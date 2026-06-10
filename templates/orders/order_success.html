@@ -90,6 +90,20 @@
           </div>
         </div>
 
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;
+                      background:{% if order.payment_type == 'cash' %}#e8f9ee{% else %}#eaf4fd{% endif %};
+                      display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span class="material-symbols-outlined" style="font-size:18px;color:{% if order.payment_type == 'cash' %}#27ae60{% else %}#3498db{% endif %};">
+              {% if order.payment_type == 'cash' %}payments{% else %}credit_card{% endif %}
+            </span>
+          </div>
+          <div>
+            <p style="font-size:10px;color:#5c5b5b;">To'lov turi</p>
+            <p style="font-size:14px;font-weight:700;color:#1a1c1f;">{{ order.get_payment_type_display }}</p>
+          </div>
+        </div>
+
         {% if order.delivery_type == 'delivery' %}
         <div style="display:flex;align-items:flex-start;gap:10px;">
           <div style="width:36px;height:36px;border-radius:10px;background:#fff0f1;

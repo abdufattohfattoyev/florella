@@ -261,6 +261,28 @@
           </p>
         </div>
       </div>
+      <!-- To'lov turi -->
+      <div>
+        <label class="block text-xs font-semibold mb-2" style="color:#5c5b5b;">To'lov turi <span style="color:#e31e24;">*</span></label>
+        <div style="display:flex;gap:8px;">
+          <label id="lblCash"
+                 style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+                        padding:12px 8px;border-radius:16px;cursor:pointer;
+                        border:2px solid #e31e24;background:#fff0f1;transition:all .15s;">
+            <input type="radio" name="payment_type" value="cash" checked style="display:none;">
+            <span class="material-symbols-outlined" style="font-size:24px;color:#e31e24;">payments</span>
+            <span style="font-size:12px;font-weight:700;color:#e31e24;">Naqt pul</span>
+          </label>
+          <label id="lblCard"
+                 style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+                        padding:12px 8px;border-radius:16px;cursor:pointer;
+                        border:2px solid #e7bdb8;background:transparent;transition:all .15s;">
+            <input type="radio" name="payment_type" value="card" style="display:none;">
+            <span class="material-symbols-outlined" style="font-size:24px;color:#5d3f3c;">credit_card</span>
+            <span style="font-size:12px;font-weight:700;color:#5d3f3c;">Karta</span>
+          </label>
+        </div>
+      </div>
       <div>
         <label class="block text-xs font-semibold mb-1.5" style="color:#5c5b5b;">Изоҳ <span style="font-weight:400;opacity:.6;">(ихтиёрий)</span></label>
         <textarea name="note" rows="2" placeholder="Қўшимча хоҳишлар..."
@@ -349,6 +371,25 @@ function openOrderModal(){
   lblD.addEventListener('click',function(){ setType('delivery'); });
   lblI.addEventListener('click',function(){ setType('dine_in'); });
 })();
+
+/* ── Payment type toggle ── */
+(function(){
+  var lblC=document.getElementById('lblCash');
+  var lblK=document.getElementById('lblCard');
+  if(!lblC||!lblK) return;
+  function setPay(t){
+    var isC=t==='cash';
+    lblC.style.borderColor = isC?'#e31e24':'#e7bdb8';
+    lblC.style.background  = isC?'#fff0f1':'transparent';
+    lblC.querySelectorAll('span').forEach(function(s){ s.style.color=isC?'#e31e24':'#5d3f3c'; });
+    lblK.style.borderColor = isC?'#e7bdb8':'#e31e24';
+    lblK.style.background  = isC?'transparent':'#fff0f1';
+    lblK.querySelectorAll('span').forEach(function(s){ s.style.color=isC?'#5d3f3c':'#e31e24'; });
+    document.querySelectorAll('[name="payment_type"]').forEach(function(r){ r.checked=r.value===t; });
+  }
+  lblC.addEventListener('click',function(){ setPay('cash'); });
+  lblK.addEventListener('click',function(){ setPay('card'); });
+})();
 function closeOrderModal(){
   var m=document.getElementById('orderModal'),p=document.getElementById('orderPanel'),b=document.getElementById('orderBackdrop');
   b.style.background='transparent';
@@ -363,7 +404,9 @@ document.getElementById('searchToggleBtn').addEventListener('click',function(){
   document.getElementById('searchInput').focus();
 });
 document.getElementById('searchCloseBtn').addEventListener('click',function(){
-  document.getElementById('searchOverlay').style.transform='';
+  document.getElementById('searchOverlay').style.transform='translateY(-100%)';
+  var inp=document.getElementById('searchInput');
+  if(inp){ inp.value=''; inp.dispatchEvent(new Event('input')); }
 });
 
 /* ── Cart badge + bar sync ── */
