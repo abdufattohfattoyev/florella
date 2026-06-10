@@ -1,0 +1,13 @@
+{% extends "admin/change_form.html" %}
+
+{% block submit_buttons_bottom %}
+{{ block.super }}
+<div class="submit-row" style="margin-top:10px;">
+  <input type="submit" name="_test_telegram" value="📨 Saqlash va test xabar yuborish"
+         class="btn btn-info" style="font-weight:700;">
+  <p style="margin:8px 0 0;font-size:12px;color:#6c757d;">
+    Tugma avval sozlamalarni saqlaydi, keyin barcha admin ID larga test xabar yuboradi.
+    Xabar kelmasa: token to'g'riligini va botga /start bosilganini tekshiring.
+  </p>
+</div>
+{% endblock %}

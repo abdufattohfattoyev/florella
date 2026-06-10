@@ -1,6 +1,9 @@
 from django.contrib import admin
+from django.contrib import messages
+from django.shortcuts import redirect
 from django.utils.html import format_html
-from .models import Order, OrderItem
+from .models import Order, OrderItem, TelegramSettings
+from .telegram import send_test_message
 
 
 class OrderItemInline(admin.TabularInline):
@@ -95,3 +98,40 @@ class OrderAdmin(admin.ModelAdmin):
 
     def get_list_display_links(self, request, list_display):
         return ('id', 'customer_name')
+
+
+@admin.register(TelegramSettings)
+class TelegramSettingsAdmin(admin.ModelAdmin):
+    change_form_template = 'admin/orders/telegramsettings/change_form.html'
+    fieldsets = (
+        ('Bot sozlamalari', {
+            'fields': ('enabled', 'bot_token', 'admin_ids'),
+            'description': 'Token: Telegram\'da <b>@BotFather</b> → /newbot. '
+                           'ID: <b>@userinfobot</b> ga /start bosing. '
+                           '<b>Har bir admin botga avval /start bosishi shart!</b>',
+        }),
+    )
+
+    def has_add_permission(self, request):
+        # Faqat bitta yozuv bo'lishi mumkin
+        return not TelegramSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        # Ro'yxat o'rniga to'g'ridan-to'g'ri sozlamalar sahifasini ochish
+        obj = TelegramSettings.objects.first()
+        if obj:
+            return redirect('admin:orders_telegramsettings_change', obj.pk)
+        return redirect('admin:orders_telegramsettings_add')
+
+    def response_change(self, request, obj):
+        if '_test_telegram' in request.POST:
+            ok, msg = send_test_message()
+            if ok:
+                messages.success(request, f'✅ {msg}')
+            else:
+                messages.error(request, f'❌ Test xatosi: {msg}')
+            return redirect('admin:orders_telegramsettings_change', obj.pk)
+        return super().response_change(request, obj)

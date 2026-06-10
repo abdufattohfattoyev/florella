@@ -68,6 +68,29 @@ class Order(models.Model):
         )
 
 
+class TelegramSettings(models.Model):
+    """Telegram bot sozlamalari — admin paneldan boshqariladi (bitta yozuv)."""
+    enabled = models.BooleanField(default=True, verbose_name='Yoqilgan',
+                                  help_text="O'chirsangiz xabar yuborilmaydi")
+    bot_token = models.CharField(max_length=120, blank=True, verbose_name='Bot token',
+                                 help_text="@BotFather dan olingan token (123456:ABC-DEF...)")
+    admin_ids = models.CharField(max_length=300, blank=True, verbose_name='Admin ID lar',
+                                 help_text="@userinfobot dan olingan ID. Bir nechta bo'lsa vergul bilan: 111,222. "
+                                           "Har bir admin botga avval /start bosishi shart!")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Telegram sozlamalari'
+        verbose_name_plural = 'Telegram sozlamalari'
+
+    def __str__(self):
+        return 'Telegram bot sozlamalari'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1  # doim bitta yozuv
+        super().save(*args, **kwargs)
+
+
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     menu_item = models.ForeignKey(MenuItem, on_delete=models.PROTECT, verbose_name='Taom')

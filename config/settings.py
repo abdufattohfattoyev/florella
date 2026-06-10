@@ -93,6 +93,12 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ─── Telegram xabarnoma ─────────────────────────────────────────────────────
+# @BotFather dan token, @userinfobot dan o'z ID'ingizni oling.
+# Bir nechta admin bo'lsa ID'larni vergul bilan ajrating: 111,222
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+TELEGRAM_ADMIN_IDS = os.environ.get('TELEGRAM_ADMIN_IDS', '')
+
 # ─── Jazzmin ───────────────────────────────────────────────────────────────
 JAZZMIN_SETTINGS = {
     "site_title": "Флорелла Кафе",
@@ -135,6 +141,7 @@ JAZZMIN_SETTINGS = {
         "orders":            "fas fa-receipt",
         "orders.Order":      "fas fa-shopping-cart",
         "orders.OrderItem":  "fas fa-list-ul",
+        "orders.TelegramSettings": "fab fa-telegram",
     },
     "default_icon_parents": "fas fa-folder",
     "default_icon_children": "fas fa-circle",

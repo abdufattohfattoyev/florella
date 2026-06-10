@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from menu.models import MenuItem
 from .models import Order, OrderItem
+from .telegram import send_order_notification
 import json
 
 
@@ -53,6 +54,7 @@ def order_create(request):
             )
 
         order.calculate_total()
+        send_order_notification(order)
         messages.success(request, f'Buyurtmangiz qabul qilindi! #{order.pk}')
         return redirect('orders:order_success', pk=order.pk)
 
