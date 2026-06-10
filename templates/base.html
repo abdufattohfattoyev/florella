@@ -393,7 +393,7 @@ function openOrderModal(){
 function closeOrderModal(){
   var m=document.getElementById('orderModal'),p=document.getElementById('orderPanel'),b=document.getElementById('orderBackdrop');
   b.style.background='transparent';
-  p.style.transform='';
+  p.style.transform='translateY(100%)';
   setTimeout(function(){m.classList.add('pointer-events-none');},300);
   document.body.style.overflow='';
 }
