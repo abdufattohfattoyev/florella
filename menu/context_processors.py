@@ -1,13 +1,7 @@
 import json
 from decimal import Decimal
+from django.conf import settings
 from .models import MenuItem
-
-
-class _DecEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, Decimal):
-            return float(o)
-        return super().default(o)
 
 
 def upsell_items(request):
@@ -17,14 +11,15 @@ def upsell_items(request):
         .select_related('category')
         .values('id', 'name', 'price', 'category__slug', 'image')
     )
+    media = settings.MEDIA_URL  # '/media/'
     data = [
         {
             'id':       i['id'],
             'name':     i['name'],
             'price':    float(i['price']),
             'category': i['category__slug'],
-            'image':    i['image'] or '',
+            'image':    (media + i['image']) if i['image'] else '',
         }
         for i in items
     ]
-    return {'upsell_items_json': json.dumps(data, cls=_DecEncoder)}
+    return {'upsell_items_json': json.dumps(data)}

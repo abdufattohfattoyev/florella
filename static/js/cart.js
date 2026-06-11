@@ -195,7 +195,7 @@ function _updateUpsell() {
   title.textContent = label;
   wrap.innerHTML = picks.map(item => {
     const imgHtml = item.image
-      ? `<img src="/media/${item.image}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`
+      ? `<img src="${item.image}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`
       : `<span style="font-size:1.6rem;">${EMOJI[item.category] || '🍽️'}</span>`;
     return `
       <div style="flex:none;width:110px;background:#fff;border-radius:14px;

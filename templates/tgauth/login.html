@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#e31e24">
+  <title>Kirish — Florella Cafe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/tailwind.css' %}?v=2">
+  <style>
+    body { font-family:'Plus Jakarta Sans',sans-serif; background:#f9f9fe; color:#1a1c1f; }
+    .code-box { letter-spacing:.2em; font-size:2rem; font-weight:900; color:#e31e24;
+                background:#fff0f1; border:2px dashed #f5c8c9; border-radius:18px;
+                padding:18px 32px; display:inline-block; user-select:all; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .pulsing { animation: pulse 1.5s infinite; }
+  </style>
+</head>
+<body style="min-height:100vh;display:flex;flex-direction:column;">
+
+  <!-- Header -->
+  <header style="background:#f9f9fe;box-shadow:0 1px 0 #e7bdb8;padding:0 16px;height:64px;
+                 display:flex;align-items:center;justify-content:space-between;">
+    <a href="{% url 'menu:menu_list' %}" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+      <div style="width:40px;height:40px;border-radius:50%;background:#e31e24;
+                  display:flex;align-items:center;justify-content:center;">
+        <span style="color:#fff;font-weight:800;font-size:13px;">FC</span>
+      </div>
+      <span style="font-weight:800;font-size:17px;color:#1a1c1f;">Florella Cafe</span>
+    </a>
+  </header>
+
+  <!-- Main -->
+  <main style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px 16px;">
+    <div style="width:100%;max-width:400px;">
+
+      <!-- Card -->
+      <div style="background:#fff;border-radius:24px;padding:32px 24px;
+                  box-shadow:0 4px 24px rgba(0,0,0,.07);text-align:center;">
+
+        <!-- Icon -->
+        <div style="width:72px;height:72px;border-radius:50%;
+                    background:linear-gradient(135deg,#e3f2fd,#bbdefb);
+                    display:flex;align-items:center;justify-content:center;
+                    margin:0 auto 20px;">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <path d="M18 2C9.163 2 2 9.163 2 18s7.163 16 16 16 16-7.163 16-16S26.837 2 18 2z"
+                  fill="#2196F3"/>
+            <path d="M25.5 11.5L7 17.5l6 2.5 2.5 6.5 2.5-5 5 4.5 2.5-14z"
+                  fill="white" stroke="white" stroke-width=".5"/>
+          </svg>
+        </div>
+
+        <h1 style="font-size:20px;font-weight:800;margin-bottom:8px;">Telegram orqali kirish</h1>
+        <p style="font-size:13px;color:#5c5b5b;margin-bottom:28px;line-height:1.6;">
+          Quyidagi kodni <strong>@{{ bot_username }}</strong> botga yuboring — tizimga avtomatik kirasiz
+        </p>
+
+        <!-- Code display -->
+        <div style="margin-bottom:20px;">
+          <div class="code-box" id="codeDisplay">{{ code }}</div>
+        </div>
+
+        <!-- Open bot button -->
+        <a id="botLink" href="https://t.me/{{ bot_username }}?text={{ code }}"
+           target="_blank"
+           style="display:flex;align-items:center;justify-content:center;gap:8px;
+                  background:#2196F3;color:#fff;padding:14px;border-radius:16px;
+                  text-decoration:none;font-size:14px;font-weight:700;margin-bottom:16px;">
+          <svg width="20" height="20" viewBox="0 0 36 36" fill="white">
+            <path d="M18 2C9.163 2 2 9.163 2 18s7.163 16 16 16 16-7.163 16-16S26.837 2 18 2z" fill="white" opacity=".2"/>
+            <path d="M25.5 11.5L7 17.5l6 2.5 2.5 6.5 2.5-5 5 4.5 2.5-14z" fill="white"/>
+          </svg>
+          Botni ochish va kodni yuborish
+        </a>
+
+        <!-- Status -->
+        <div id="statusBox" style="padding:12px;background:#ededf2;border-radius:12px;margin-bottom:16px;">
+          <div class="pulsing" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+            <span class="material-symbols-outlined" style="font-size:18px;color:#5c5b5b;">hourglass_empty</span>
+            <span style="font-size:13px;font-weight:600;color:#5c5b5b;">Tasdiqlash kutilmoqda…</span>
+          </div>
+        </div>
+
+        <!-- Timer -->
+        <p style="font-size:12px;color:#5c5b5b;" id="timerText">Kod <span id="timerSec">5:00</span> da bekor bo'ladi</p>
+
+        <!-- New code button -->
+        <button id="newCodeBtn" onclick="getNewCode()"
+                style="margin-top:12px;background:transparent;border:none;cursor:pointer;
+                       font-size:13px;font-weight:600;color:#e31e24;text-decoration:underline;">
+          Yangi kod olish
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+<script>
+var currentCode = '{{ code }}';
+var checkInterval = null;
+var timerInterval = null;
+var secondsLeft = 300;
+
+function startTimer(){
+  clearInterval(timerInterval);
+  secondsLeft = 300;
+  timerInterval = setInterval(function(){
+    secondsLeft--;
+    var m = Math.floor(secondsLeft/60);
+    var s = secondsLeft%60;
+    var el = document.getElementById('timerSec');
+    if(el) el.textContent = m+':'+(s<10?'0':'')+s;
+    if(secondsLeft<=0){
+      clearInterval(timerInterval);
+      clearInterval(checkInterval);
+      document.getElementById('statusBox').innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span class="material-symbols-outlined" style="font-size:18px;color:#e31e24;">timer_off</span>
+          <span style="font-size:13px;font-weight:600;color:#e31e24;">Kod muddati o'tdi</span>
+        </div>`;
+    }
+  }, 1000);
+}
+
+function startPolling(){
+  clearInterval(checkInterval);
+  checkInterval = setInterval(function(){
+    fetch('/auth/check/'+currentCode+'/')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(data.status === 'ok'){
+          clearInterval(checkInterval);
+          clearInterval(timerInterval);
+          document.getElementById('statusBox').innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+              <span class="material-symbols-outlined" style="font-size:18px;color:#27ae60;
+                    font-variation-settings:'FILL' 1;">check_circle</span>
+              <span style="font-size:13px;font-weight:700;color:#1a6b3a;">
+                Xush kelibsiz, ${data.name}! Yo'naltirilmoqda…
+              </span>
+            </div>`;
+          document.getElementById('statusBox').style.background = '#e8f9ee';
+          setTimeout(function(){ window.location.href='/'; }, 1200);
+        } else if(data.status === 'expired'){
+          clearInterval(checkInterval);
+        }
+      })
+      .catch(function(){});
+  }, 2000);
+}
+
+function getNewCode(){
+  clearInterval(checkInterval);
+  clearInterval(timerInterval);
+  fetch('/auth/new-code/')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      currentCode = data.code;
+      document.getElementById('codeDisplay').textContent = data.code;
+      var link = document.getElementById('botLink');
+      link.href = 'https://t.me/'+data.bot_username+'?text='+data.code;
+      document.getElementById('statusBox').innerHTML = `
+        <div class="pulsing" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span class="material-symbols-outlined" style="font-size:18px;color:#5c5b5b;">hourglass_empty</span>
+          <span style="font-size:13px;font-weight:600;color:#5c5b5b;">Tasdiqlash kutilmoqda…</span>
+        </div>`;
+      document.getElementById('statusBox').style.background = '#ededf2';
+      startTimer();
+      startPolling();
+    });
+}
+
+startTimer();
+startPolling();
+</script>
+</body>
+</html>

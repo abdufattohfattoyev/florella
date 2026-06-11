@@ -4,7 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#e31e24">
-  <title>{% block title %}Florella Cafe{% endblock %}</title>
+  <title>{% block title %}Florella Cafe — Toshkentda sushi, rollar va pizza yetkazib berish{% endblock %}</title>
+
+  <!-- SEO -->
+  <meta name="description" content="Florella Cafe — Toshkentda eng mazali sushi, rollar, setlar va pizza. Onlayn buyurtma bering, tez yetkazib beramiz! Доставка суши и роллов в Ташкенте.">
+  <meta name="keywords" content="florella, florella cafe, sushi toshkent, rollar toshkent, pizza toshkent, sushi dostavka, суши ташкент, роллы ташкент, доставка суши, флорелла">
+  <meta name="robots" content="index, follow">
+  <meta name="google-site-verification" content="ZDKXHSbKLpD0raec7OML2PrUMfzQf71rIfp-vqfLVKg">
+  <link rel="canonical" href="https://florella-cafe.uz/">
+
+  <!-- Open Graph (Telegram, Facebook, Instagram) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Florella Cafe">
+  <meta property="og:title" content="Florella Cafe — Toshkentda sushi va pizza yetkazib berish">
+  <meta property="og:description" content="Eng mazali sushi, rollar, setlar va pizza. Onlayn buyurtma bering — tez yetkazib beramiz!">
+  <meta property="og:url" content="https://florella-cafe.uz/">
+  <meta property="og:locale" content="uz_UZ">
+
+  <!-- Structured data: mahalliy biznes (Google xaritada va qidiruvda boy natija) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Restaurant",
+    "name": "Florella Cafe",
+    "url": "https://florella-cafe.uz/",
+    "servesCuisine": ["Sushi", "Pizza", "Japanese"],
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Tashkent",
+      "addressCountry": "UZ"
+    },
+    "priceRange": "$$",
+    "acceptsReservations": "False"
+  }
+  </script>
 
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23e31e24'/><text y='.9em' font-size='68' x='50%' text-anchor='middle' dominant-baseline='hanging' font-family='sans-serif' font-weight='bold' fill='white'>FC</text></svg>">
@@ -13,7 +46,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
+  <style>
+    /* Ikonka shrifti yuklanmaguncha xom matn (arrow_back, search...) ko'rinmasin */
+    .material-symbols-outlined {
+      overflow: hidden;
+      max-width: 1.5em;
+      display: inline-block;
+    }
+  </style>
 
   <!-- Tailwind CSS (built) -->
   {% load static %}
@@ -36,11 +77,36 @@
     </div>
     <span class="font-bold text-lg" style="color:#1a1c1f;">Florella Cafe</span>
   </a>
-  <button id="searchToggleBtn"
-          class="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition-transform"
-          style="background:#ededf2;">
-    <span class="material-symbols-outlined" style="color:#ba0013;font-size:22px;">search</span>
-  </button>
+  <div class="flex items-center gap-2">
+    {% comment %} Telegram login — vaqtincha yashirilgan
+    {% if request.session.tg_id %}
+    <a href="{% url 'tgauth:logout' %}"
+       style="display:flex;align-items:center;gap:5px;padding:6px 12px;
+              border-radius:999px;background:#ededf2;text-decoration:none;">
+      <span class="material-symbols-outlined" style="font-size:16px;color:#5c5b5b;">person</span>
+      <span style="font-size:12px;font-weight:700;color:#1a1c1f;max-width:80px;
+                   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        {{ request.session.tg_name }}
+      </span>
+    </a>
+    {% else %}
+    <a href="{% url 'tgauth:login' %}"
+       style="display:flex;align-items:center;gap:5px;padding:6px 12px;
+              border-radius:999px;background:#e3f2fd;text-decoration:none;">
+      <svg width="14" height="14" viewBox="0 0 36 36" fill="#2196F3">
+        <path d="M18 2C9.163 2 2 9.163 2 18s7.163 16 16 16 16-7.163 16-16S26.837 2 18 2z" fill="#2196F3" opacity=".2"/>
+        <path d="M25.5 11.5L7 17.5l6 2.5 2.5 6.5 2.5-5 5 4.5 2.5-14z" fill="#2196F3"/>
+      </svg>
+      <span style="font-size:12px;font-weight:700;color:#2196F3;">Kirish</span>
+    </a>
+    {% endif %}
+    {% endcomment %}
+    <button id="searchToggleBtn"
+            class="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition-transform"
+            style="background:#ededf2;">
+      <span class="material-symbols-outlined" style="color:#ba0013;font-size:22px;">search</span>
+    </button>
+  </div>
 </header>
 
 <!-- ═══ SEARCH OVERLAY ═══ -->
