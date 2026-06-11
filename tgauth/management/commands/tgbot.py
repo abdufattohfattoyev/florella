@@ -1,90 +1,33 @@
 """
 python manage.py tgbot
 
-Bot long polling rejimida ishlaydi — foydalanuvchilarning
-FL-XXXX kodlarini qabul qiladi va tizimga kirishni tasdiqlaydi.
+Bot long polling rejimida ishlaydi — lokal ishlab chiqish uchun.
 
-Production'da Telegram webhook ishlatish tavsiya etiladi.
+DIQQAT: bu buyruq webhook'ni o'chiradi! Production'da webhook ishlatilsa,
+lokal test tugagach webhook'ni qayta o'rnating:
+  python manage.py tgbot --set-webhook
 """
 import time
 import json
 import logging
 import urllib.request
-import urllib.error
 
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 
 from orders.telegram import get_config, _api_call
+from tgauth.bot_logic import process_message, SITE_URL
 
 logger = logging.getLogger(__name__)
 
 
-def _process_update(token, update):
-    message = update.get('message') or update.get('edited_message')
-    if not message:
-        return
-
-    chat_id  = message.get('chat', {}).get('id')
-    text     = (message.get('text') or '').strip().upper()
-    from_    = message.get('from', {})
-    name     = (from_.get('first_name') or '') + (' ' + (from_.get('last_name') or '')).rstrip()
-    username = from_.get('username', '')
-
-    if text.startswith('/START'):
-        _api_call(token, 'sendMessage', {
-            'chat_id': chat_id,
-            'text': (
-                '👋 Salom! Men Florella Cafe login botiman.\n\n'
-                '🔑 Saytdagi FL-XXXX kodini yuboring — tizimga kirasiz.'
-            ),
-        })
-        return
-
-    if text.startswith('FL-') and len(text) == 7:
-        from tgauth.models import TelegramLoginCode
-        try:
-            obj = TelegramLoginCode.objects.get(code=text, verified=False)
-        except TelegramLoginCode.DoesNotExist:
-            _api_call(token, 'sendMessage', {
-                'chat_id': chat_id,
-                'text': '❌ Kod topilmadi yoki muddati o\'tgan.\nSaytda yangi kod oling.',
-            })
-            return
-
-        if obj.is_expired():
-            obj.delete()
-            _api_call(token, 'sendMessage', {
-                'chat_id': chat_id,
-                'text': '⏰ Kodning muddati o\'tdi (5 daqiqa).\nSaytda yangi kod oling.',
-            })
-            return
-
-        obj.telegram_id = chat_id
-        obj.tg_name     = name.strip() or str(chat_id)
-        obj.tg_username = username
-        obj.verified    = True
-        obj.save()
-
-        display = f'@{username}' if username else name.strip() or str(chat_id)
-        _api_call(token, 'sendMessage', {
-            'chat_id': chat_id,
-            'text': (
-                f'✅ Muvaffaqiyatli! Xush kelibsiz, {display}!\n\n'
-                '🛍 Saytga qaytib buyurtma bering: https://florella-cafe.uz'
-            ),
-        })
-        logger.info('Login: %s (chat_id=%s)', display, chat_id)
-        return
-
-    _api_call(token, 'sendMessage', {
-        'chat_id': chat_id,
-        'text': '🤔 Tushunmadim.\n\nSaytdagi FL-XXXX kodini yuboring.',
-    })
-
-
 class Command(BaseCommand):
-    help = 'Telegram bot — long polling (local development)'
+    help = 'Telegram bot — long polling (lokal) yoki webhook o\'rnatish'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--set-webhook', action='store_true',
+            help=f'Webhook o\'rnatish ({SITE_URL}/auth/webhook/) va chiqish',
+        )
 
     def handle(self, *args, **options):
         token, _ = get_config()
@@ -92,10 +35,28 @@ class Command(BaseCommand):
             self.stderr.write('❌ Bot token topilmadi. Admin panel → Telegram sozlamalari.')
             return
 
-        # Webhook o'chirish (long polling bilan konflikt bo'lmasligi uchun)
+        if options['set_webhook']:
+            resp = _api_call(token, 'setWebhook', {
+                'url': f'{SITE_URL}/auth/webhook/',
+                'allowed_updates': ['message'],
+            })
+            if resp.get('ok'):
+                self.stdout.write(self.style.SUCCESS(
+                    f'✅ Webhook o\'rnatildi: {SITE_URL}/auth/webhook/\n'
+                    '   Endi bot serverda alohida jarayonsiz ishlaydi.'
+                ))
+            else:
+                self.stderr.write(f'❌ Xato: {resp.get("description")}')
+            return
+
+        # Long polling — webhook bilan konflikt bo'lmasligi uchun o'chiramiz
         _api_call(token, 'deleteWebhook', {'drop_pending_updates': False})
 
-        self.stdout.write(self.style.SUCCESS('✅ Bot ishga tushdi. FL-XXXX kodlarini kutmoqda…'))
+        self.stdout.write(self.style.SUCCESS('✅ Bot ishga tushdi (long polling).'))
+        self.stdout.write(self.style.WARNING(
+            '⚠️  Webhook o\'chirildi! Production uchun keyin qayta o\'rnating:\n'
+            '   python manage.py tgbot --set-webhook'
+        ))
         self.stdout.write('   To\'xtatish: Ctrl+C\n')
 
         offset = 0
@@ -121,8 +82,11 @@ class Command(BaseCommand):
 
                 for update in data.get('result', []):
                     offset = update['update_id'] + 1
+                    message = update.get('message') or update.get('edited_message')
+                    if not message:
+                        continue
                     try:
-                        _process_update(token, update)
+                        process_message(token, message)
                     except Exception as e:
                         logger.exception('Update xatosi: %s', e)
 

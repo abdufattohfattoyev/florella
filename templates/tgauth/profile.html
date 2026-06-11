@@ -1,0 +1,414 @@
+{% extends 'base.html' %}
+{% block title %}Profil — Florella Cafe{% endblock %}
+
+{% block content %}
+<main class="desktop-wrap" style="max-width:680px;margin:0 auto;padding-top:76px;padding-bottom:130px;">
+
+  <!-- ═══ PROFIL KARTASI ═══ -->
+  <div style="padding:20px 16px 0;">
+    <div style="background:#fff;border-radius:24px;padding:24px 20px;
+                box-shadow:0 4px 24px rgba(0,0,0,.06);">
+
+      <!-- Avatar + ism -->
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+        <div style="width:64px;height:64px;border-radius:50%;flex-shrink:0;
+                    background:linear-gradient(135deg,#e31e24,#ff6b6e);
+                    display:flex;align-items:center;justify-content:center;">
+          <span style="color:#fff;font-weight:800;font-size:24px;">
+            {{ customer.name|default:"?"|slice:":1"|upper }}
+          </span>
+        </div>
+        <div style="min-width:0;">
+          <h1 style="font-size:19px;font-weight:800;color:#1a1c1f;
+                     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            {{ customer.name|default:"Mijoz" }}
+          </h1>
+          {% if customer.username %}
+          <p style="font-size:13px;color:#5c5b5b;">@{{ customer.username }}</p>
+          {% endif %}
+          <p style="font-size:11px;color:#9c9b9b;">
+            Ro'yxatdan: {{ customer.created_at|date:"d.m.Y" }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Tahrirlash formasi -->
+      <form method="POST" action="{% url 'tgauth:profile' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_profile">
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#5c5b5b;margin-bottom:6px;">
+              Ism
+            </label>
+            <input type="text" name="name" value="{{ customer.name }}" placeholder="Ismingiz"
+                   class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+                   style="background:#ededf2;color:#1a1c1f;">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#5c5b5b;margin-bottom:6px;">
+              Telefon
+            </label>
+            <input type="tel" name="phone" value="{{ customer.phone }}" placeholder="+998 90 123 45 67"
+                   class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+                   style="background:#ededf2;color:#1a1c1f;">
+          </div>
+          <button type="submit"
+                  class="w-full flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                  style="background:#e31e24;color:#fff;padding:14px;border-radius:16px;
+                         border:none;cursor:pointer;font-size:14px;font-weight:700;">
+            <span class="material-symbols-outlined" style="font-size:18px;">save</span>
+            Saqlash
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══ MANZILLARIM ═══ -->
+  <div style="padding:24px 16px 0;">
+    <h2 style="font-size:17px;font-weight:800;color:#1a1c1f;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+      <span class="material-symbols-outlined" style="color:#e31e24;font-size:20px;">location_on</span>
+      Manzillarim
+      <span style="background:#ededf2;color:#5c5b5b;font-size:12px;font-weight:700;
+                   padding:2px 10px;border-radius:999px;">{{ addresses|length }}</span>
+    </h2>
+
+    {% for addr in addresses %}
+    <div style="background:#fff;border-radius:16px;padding:14px 16px;margin-bottom:10px;
+                box-shadow:0 2px 12px rgba(0,0,0,.05);
+                {% if addr.is_default %}border:2px solid #e31e24;{% endif %}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+        <div style="min-width:0;flex:1;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            {% if addr.title %}
+            <span style="font-size:13px;font-weight:800;color:#1a1c1f;">
+              {% if addr.title|lower == 'uy' %}🏠{% elif addr.title|lower == 'ish' %}💼{% else %}📍{% endif %}
+              {{ addr.title }}
+            </span>
+            {% endif %}
+            {% if addr.is_default %}
+            <span style="background:#fff0f1;color:#e31e24;font-size:10px;font-weight:800;
+                         padding:2px 8px;border-radius:999px;">ASOSIY</span>
+            {% endif %}
+          </div>
+          <p style="font-size:12.5px;color:#5c5b5b;line-height:1.5;">{{ addr.address }}</p>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          {% if not addr.is_default %}
+          <form method="POST" action="{% url 'tgauth:profile' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="set_default">
+            <input type="hidden" name="addr_id" value="{{ addr.pk }}">
+            <button type="submit" title="Asosiy qilish"
+                    style="width:32px;height:32px;border-radius:10px;border:1.5px solid #e7bdb8;
+                           background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+              <span class="material-symbols-outlined" style="font-size:16px;color:#e31e24;">star</span>
+            </button>
+          </form>
+          {% endif %}
+          <form method="POST" action="{% url 'tgauth:profile' %}"
+                onsubmit="return confirm('Bu manzilni o\'chirasizmi?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="del_address">
+            <input type="hidden" name="addr_id" value="{{ addr.pk }}">
+            <button type="submit" title="O'chirish"
+                    style="width:32px;height:32px;border-radius:10px;border:1.5px solid #ffcdd2;
+                           background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+              <span class="material-symbols-outlined" style="font-size:16px;color:#c62828;">delete</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- Yangi manzil qo'shish -->
+    <div style="background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.05);">
+      <p style="font-size:13px;font-weight:700;color:#1a1c1f;margin-bottom:10px;">➕ Yangi manzil qo'shish</p>
+      <form method="POST" action="{% url 'tgauth:profile' %}" id="addAddrForm">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_address">
+        <input type="hidden" name="latitude"  id="profLat">
+        <input type="hidden" name="longitude" id="profLon">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+
+          <!-- Xarita -->
+          <div id="profAddrMap"
+               style="height:200px;border-radius:14px;overflow:hidden;border:2px solid #e7bdb8;"></div>
+          <p style="font-size:11px;color:#5c5b5b;text-align:center;">
+            <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;color:#e31e24;">touch_app</span>
+            Aynan <strong>binoning ustiga</strong> bosing — ko'cha va dom raqami o'zi to'ldiriladi
+          </p>
+
+          <!-- GPS -->
+          <button type="button" id="profGpsBtn" onclick="profDetectLocation()"
+                  style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;
+                         padding:11px;border-radius:14px;border:2px solid #e31e24;
+                         background:#fff0f1;cursor:pointer;">
+            <span id="profGpsIcon" class="material-symbols-outlined" style="font-size:18px;color:#e31e24;">my_location</span>
+            <span style="font-size:13px;font-weight:700;color:#e31e24;">GPS orqali aniqlash</span>
+          </button>
+
+          <input type="text" name="title" placeholder="Nomi (Uy, Ish...) — ixtiyoriy" maxlength="100"
+                 class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+                 style="background:#ededf2;color:#1a1c1f;">
+
+          <input type="text" name="street" id="profStreet" required
+                 placeholder="Ko'cha, mahalla (xaritadan to'ldiriladi)"
+                 class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+                 style="background:#ededf2;color:#1a1c1f;">
+
+          <!-- Dom / Podyezd / Kvartira -->
+          <div style="display:flex;gap:8px;">
+            <div style="flex:1;">
+              <label style="font-size:11px;color:#5c5b5b;font-weight:600;display:block;margin-bottom:4px;">Dom №</label>
+              <input type="text" name="house" id="profHouse" placeholder="1" inputmode="numeric"
+                     class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+                     style="background:#ededf2;color:#1a1c1f;">
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:11px;color:#5c5b5b;font-weight:600;display:block;margin-bottom:4px;">Podyezd №</label>
+              <input type="text" name="podyezd" placeholder="1" inputmode="numeric"
+                     class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+                     style="background:#ededf2;color:#1a1c1f;">
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:11px;color:#5c5b5b;font-weight:600;display:block;margin-bottom:4px;">Kvartira №</label>
+              <input type="text" name="apartment" placeholder="10" inputmode="numeric"
+                     class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+                     style="background:#ededf2;color:#1a1c1f;">
+            </div>
+          </div>
+
+          <button type="submit"
+                  style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;
+                         background:#e31e24;color:#fff;padding:13px;border-radius:14px;
+                         border:none;cursor:pointer;font-size:13px;font-weight:700;">
+            <span class="material-symbols-outlined" style="font-size:17px;">add_location</span>
+            Manzilni saqlash
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+  /* ── Profil: manzil xaritasi (Yandex -> Leaflet zaxira) ── */
+  (function(){
+    if(!document.getElementById('profAddrMap')) return;
+    var map = null, marker = null, engine = '', _autoHouse = '';
+
+    function setCoords(lat, lon){
+      document.getElementById('profLat').value = lat;
+      document.getElementById('profLon').value = lon;
+    }
+
+    function reverseGeo(lat, lon){
+      fetch('/geo/reverse/?lat='+lat+'&lon='+lon)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(!data.ok) return;
+        var st = document.getElementById('profStreet');
+        if(st && data.address) st.value = data.address;
+        var h = document.getElementById('profHouse');
+        if(h && data.house && (!h.value || h.value === _autoHouse)){
+          h.value = data.house;
+          _autoHouse = data.house;
+        }
+      }).catch(function(){});
+    }
+
+    function onPick(lat, lon){
+      placeMarker(lat, lon);
+      setCoords(lat, lon);
+      reverseGeo(lat, lon);
+    }
+
+    function placeMarker(lat, lon){
+      if(!map) return;
+      if(engine === 'yandex'){
+        if(marker){ marker.geometry.setCoordinates([lat, lon]); }
+        else {
+          marker = new ymaps.Placemark([lat, lon], {}, {
+            draggable: true, preset: 'islands#redDotIcon'
+          });
+          marker.events.add('dragend', function(){
+            var c = marker.geometry.getCoordinates();
+            setCoords(c[0], c[1]);
+            reverseGeo(c[0], c[1]);
+          });
+          map.geoObjects.add(marker);
+        }
+        map.setCenter([lat, lon]);
+        return;
+      }
+      if(marker) marker.setLatLng([lat, lon]);
+      else {
+        marker = L.marker([lat, lon], {draggable:true}).addTo(map);
+        marker.on('dragend', function(){
+          var p = marker.getLatLng();
+          setCoords(p.lat, p.lng);
+          reverseGeo(p.lat, p.lng);
+        });
+      }
+      map.panTo([lat, lon]);
+    }
+
+    function initLeaflet(){
+      if(map || typeof L === 'undefined') return;
+      engine = 'leaflet';
+      map = L.map('profAddrMap', {zoomControl:true, attributionControl:false})
+             .setView([41.2995, 69.2401], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      map.on('click', function(e){ onPick(e.latlng.lat, e.latlng.lng); });
+      setTimeout(function(){ map.invalidateSize(); }, 300);
+    }
+
+    if(window.ymaps){
+      ymaps.ready(function(){
+        if(map) return;
+        engine = 'yandex';
+        map = new ymaps.Map('profAddrMap', {
+          center: [41.2995, 69.2401], zoom: 12,
+          controls: ['zoomControl']
+        }, {suppressMapOpenBlock: true});
+        map.events.add('click', function(e){
+          var c = e.get('coords');
+          onPick(c[0], c[1]);
+        });
+        setTimeout(function(){ map.container.fitToViewport(); }, 300);
+      });
+      /* Yandex 3 soniyada ochilmasa — Leaflet */
+      setTimeout(function(){ if(!map) initLeaflet(); }, 3000);
+    } else {
+      initLeaflet();
+    }
+
+    window.profDetectLocation = function(){
+      var icon = document.getElementById('profGpsIcon');
+      if(!navigator.geolocation) return;
+      icon.textContent = 'sync';
+      icon.style.animation = 'spin 1s linear infinite';
+      navigator.geolocation.getCurrentPosition(function(pos){
+        var lat = pos.coords.latitude, lon = pos.coords.longitude;
+        if(map){
+          if(engine === 'yandex') map.setCenter([lat, lon], 17);
+          else map.setView([lat, lon], 17);
+        }
+        onPick(lat, lon);
+        icon.textContent = 'my_location';
+        icon.style.animation = '';
+      }, function(){
+        icon.textContent = 'location_off';
+        icon.style.animation = '';
+      }, {timeout:10000, enableHighAccuracy:true});
+    };
+
+    var sty = document.createElement('style');
+    sty.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(sty);
+  })();
+  </script>
+
+  <!-- ═══ BUYURTMALAR TARIXI ═══ -->
+  <div style="padding:24px 16px 0;">
+    <h2 style="font-size:17px;font-weight:800;color:#1a1c1f;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+      <span class="material-symbols-outlined" style="color:#e31e24;font-size:20px;">receipt_long</span>
+      Buyurtmalarim
+      <span style="background:#ededf2;color:#5c5b5b;font-size:12px;font-weight:700;
+                   padding:2px 10px;border-radius:999px;">{{ orders|length }}</span>
+    </h2>
+
+    {% if orders %}
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      {% for order in orders %}
+      <div style="background:#fff;border-radius:18px;padding:16px;
+                  box-shadow:0 2px 12px rgba(0,0,0,.05);">
+        <!-- Sarlavha qatori -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:14px;font-weight:800;color:#1a1c1f;">№{{ order.pk }}</span>
+            <span style="font-size:11px;color:#9c9b9b;">{{ order.created_at|date:"d.m.Y H:i" }}</span>
+          </div>
+          {% if order.status == 'new' %}
+            <span style="background:#fff4e0;color:#b8860b;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">🕐 Yangi</span>
+          {% elif order.status == 'confirmed' %}
+            <span style="background:#e3f2fd;color:#1565c0;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">✓ Tasdiqlandi</span>
+          {% elif order.status == 'preparing' %}
+            <span style="background:#fff3e0;color:#e65100;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">👨‍🍳 Tayyorlanmoqda</span>
+          {% elif order.status == 'ready' %}
+            <span style="background:#e8f5e9;color:#2e7d32;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">✅ Tayyor</span>
+          {% elif order.status == 'on_the_way' %}
+            <span style="background:#e3f2fd;color:#0277bd;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">🛵 Yo'lda</span>
+          {% elif order.status == 'delivered' %}
+            <span style="background:#e8f9ee;color:#1a6b3a;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">🎉 Yetkazildi</span>
+          {% elif order.status == 'cancelled' %}
+            <span style="background:#ffebee;color:#c62828;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">✕ Bekor qilindi</span>
+          {% endif %}
+        </div>
+
+        <!-- Taomlar -->
+        <div style="border-top:1px solid rgba(231,189,184,.4);padding-top:10px;margin-bottom:10px;">
+          {% for item in order.items.all %}
+          <div style="display:flex;justify-content:space-between;padding:3px 0;">
+            <span style="font-size:12.5px;color:#5c5b5b;">{{ item.menu_item.name }} × {{ item.quantity }}</span>
+            <span style="font-size:12.5px;font-weight:700;color:#1a1c1f;">{{ item.subtotal|floatformat:0 }} сўм</span>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pastki qator -->
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:12px;color:#5c5b5b;">
+            {% if order.delivery_type == 'delivery' %}🛵 Yetkazib berish{% else %}🚶 Olib ketish{% endif %}
+            · {% if order.payment_type == 'cash' %}💵 Naqt{% else %}💳 Karta{% endif %}
+          </span>
+          <span style="font-size:15px;font-weight:800;color:#ba0013;">{{ order.total_price|floatformat:0 }} сўм</span>
+        </div>
+
+        {% if order.status == 'new' %}
+        <form method="POST" action="{% url 'orders:order_cancel' order.pk %}" style="margin-top:10px;"
+              onsubmit="return confirm('Buyurtma №{{ order.pk }} ni bekor qilasizmi?');">
+          {% csrf_token %}
+          <button type="submit"
+                  style="width:100%;background:transparent;color:#c62828;border:1.5px solid #ffcdd2;
+                         padding:9px;border-radius:12px;cursor:pointer;font-size:12px;font-weight:700;">
+            Buyurtmani bekor qilish
+          </button>
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="background:#fff;border-radius:18px;padding:36px 20px;text-align:center;
+                box-shadow:0 2px 12px rgba(0,0,0,.05);">
+      <span style="font-size:3rem;display:block;margin-bottom:10px;">🛒</span>
+      <p style="font-size:14px;font-weight:700;color:#1a1c1f;margin-bottom:4px;">Hali buyurtma yo'q</p>
+      <p style="font-size:12px;color:#5c5b5b;margin-bottom:16px;">Birinchi buyurtmangizni bering!</p>
+      <a href="{% url 'menu:menu_list' %}"
+         style="display:inline-flex;align-items:center;gap:6px;background:#e31e24;color:#fff;
+                padding:11px 22px;border-radius:14px;text-decoration:none;font-size:13px;font-weight:700;">
+        <span class="material-symbols-outlined" style="font-size:17px;">restaurant_menu</span>
+        Menuga o'tish
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══ CHIQISH ═══ -->
+  <div style="padding:24px 16px 0;">
+    <a href="{% url 'tgauth:logout' %}"
+       onclick="return confirm('Hisobdan chiqasizmi?');"
+       style="display:flex;align-items:center;justify-content:center;gap:8px;
+              background:#fff;color:#c62828;padding:14px;border-radius:16px;
+              text-decoration:none;font-size:14px;font-weight:700;
+              border:1.5px solid #ffcdd2;">
+      <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
+      Hisobdan chiqish
+    </a>
+  </div>
+
+</main>
+{% endblock %}

@@ -469,21 +469,15 @@ function requestLocation(){
     function(pos){
       var lat = pos.coords.latitude;
       var lon = pos.coords.longitude;
-      /* Nominatim reverse geocoding — zoom=18 bino darajasida aniqlik (uy raqami) */
-      fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&addressdetails=1&lat='+lat+'&lon='+lon+'&accept-language=uz,ru', {
-        headers: { 'Accept-Language': 'uz,ru' }
-      })
+      /* Server geocoder: Yandex (uy raqamigacha) -> OSM zaxira */
+      fetch('/geo/reverse/?lat='+lat+'&lon='+lon)
       .then(function(r){ return r.json(); })
       .then(function(data){
-        var a = data.address || {};
-        /* Aniq manzil: ko'cha + uy raqami + mahalla + shahar */
-        var street = a.road || a.pedestrian || a.residential || '';
-        if(street && a.house_number) street += ', ' + a.house_number + '-uy';
-        var parts = [];
-        if(street) parts.push(street);
-        if(a.suburb || a.neighbourhood || a.quarter) parts.push(a.suburb || a.neighbourhood || a.quarter);
-        if(a.city || a.town || a.village) parts.push(a.city || a.town || a.village);
-        var addr = parts.length ? parts.slice(0,3).join(', ') : (data.display_name||'').split(',').slice(0,3).join(', ');
+        if(!data.ok) throw new Error('geocode');
+        var addr = data.address || '';
+        if(data.house && data.street){
+          addr = addr.replace(data.street, data.street + ', ' + data.house + '-uy');
+        }
         txt.textContent  = addr || 'Манзил топилди';
         txt.style.color  = '#1a1c1f';
         icon.textContent = 'my_location';

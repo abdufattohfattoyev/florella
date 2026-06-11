@@ -31,7 +31,10 @@ def order_create(request):
             messages.error(request, 'Savatcha bo\'sh! Kamida bitta taom tanlang.')
             return redirect('menu:menu_list')
 
+        tg_id = request.session.get('tg_id')
+
         order = Order.objects.create(
+            tg_id=tg_id,
             customer_name=customer_name,
             customer_phone=customer_phone,
             delivery_type=delivery_type,
@@ -54,6 +57,29 @@ def order_create(request):
             )
 
         order.calculate_total()
+
+        # Mijoz profilini oxirgi ma'lumotlar bilan yangilash
+        if tg_id:
+            from tgauth.models import TelegramCustomer, CustomerAddress
+            customer, _ = TelegramCustomer.objects.update_or_create(
+                telegram_id=tg_id,
+                defaults={
+                    'name': customer_name or '',
+                    'phone': customer_phone or '',
+                },
+            )
+            # Ishlatilgan manzilni saqlangan manzillarga qo'shish (takror bo'lmasin)
+            if delivery_type == 'delivery' and delivery_address:
+                addr, _ = CustomerAddress.objects.get_or_create(
+                    customer=customer,
+                    address=delivery_address,
+                    defaults={'latitude': latitude, 'longitude': longitude},
+                )
+                addr.is_default = True
+                if latitude is not None:
+                    addr.latitude, addr.longitude = latitude, longitude
+                addr.save()
+
         send_order_notification(order)
         messages.success(request, f'Buyurtmangiz qabul qilindi! #{order.pk}')
         return redirect('orders:order_success', pk=order.pk)

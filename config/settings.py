@@ -23,6 +23,12 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
+# ─── Sessiya — mijoz akkauntdan tez chiqib ketmasligi uchun ─────────────────
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 90      # 90 kun
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False     # brauzer yopilsa ham saqlanadi
+SESSION_SAVE_EVERY_REQUEST = True           # har faollikda muddat qayta 90 kunga uzayadi
+SESSION_COOKIE_SAMESITE = 'Lax'
+
 
 INSTALLED_APPS = [
     'jazzmin',
@@ -60,6 +66,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'menu.context_processors.upsell_items',
+                'tgauth.context_processors.customer_profile',
             ],
         },
     },
@@ -100,6 +107,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Bir nechta admin bo'lsa ID'larni vergul bilan ajrating: 111,222
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
 TELEGRAM_ADMIN_IDS = os.environ.get('TELEGRAM_ADMIN_IDS', '')
+
+# ─── Yandex Geocoder (manzil aniqlash — uy raqamigacha) ─────────────────────
+# Bepul kalit: developer.tech.yandex.ru -> JavaScript API va Geocoder HTTP API
+YANDEX_GEOCODER_KEY = os.environ.get('YANDEX_GEOCODER_KEY', '')
 
 # ─── Jazzmin ───────────────────────────────────────────────────────────────
 JAZZMIN_SETTINGS = {

@@ -21,6 +21,7 @@ class Order(models.Model):
         ('card', 'Karta'),
     ]
 
+    tg_id = models.BigIntegerField(null=True, blank=True, db_index=True, verbose_name='Telegram ID')
     customer_name = models.CharField(max_length=200, verbose_name='Mijoz ismi')
     customer_phone = models.CharField(max_length=20, verbose_name='Telefon')
     delivery_type = models.CharField(max_length=10, choices=DELIVERY_TYPE_CHOICES, default='delivery', verbose_name='Buyurtma turi')

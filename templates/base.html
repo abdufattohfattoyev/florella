@@ -63,6 +63,10 @@
   <link rel="stylesheet" href="{% static 'css/desktop.css' %}?v=1">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  {% if yandex_maps_key %}
+  <!-- Yandex Maps JS API — ishlamasa Leaflet (OSM) zaxira bo'ladi -->
+  <script src="https://api-maps.yandex.ru/2.1/?apikey={{ yandex_maps_key }}&lang=ru_RU"></script>
+  {% endif %}
 
   {% block extra_head %}{% endblock %}
 </head>
@@ -79,12 +83,11 @@
     <span class="font-bold text-lg" style="color:#1a1c1f;">Florella Cafe</span>
   </a>
   <div class="flex items-center gap-2">
-    {% comment %} Telegram login — vaqtincha yashirilgan
     {% if request.session.tg_id %}
-    <a href="{% url 'tgauth:logout' %}"
+    <a href="{% url 'tgauth:profile' %}"
        style="display:flex;align-items:center;gap:5px;padding:6px 12px;
               border-radius:999px;background:#ededf2;text-decoration:none;">
-      <span class="material-symbols-outlined" style="font-size:16px;color:#5c5b5b;">person</span>
+      <span class="material-symbols-outlined" style="font-size:16px;color:#e31e24;">person</span>
       <span style="font-size:12px;font-weight:700;color:#1a1c1f;max-width:80px;
                    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
         {{ request.session.tg_name }}
@@ -101,7 +104,6 @@
       <span style="font-size:12px;font-weight:700;color:#2196F3;">Kirish</span>
     </a>
     {% endif %}
-    {% endcomment %}
     <button id="searchToggleBtn"
             class="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition-transform"
             style="background:#ededf2;">
@@ -294,13 +296,16 @@
       <div>
         <label class="block text-xs font-semibold mb-1.5" style="color:#5c5b5b;">Исмингиз <span style="color:#e31e24;">*</span></label>
         <input type="text" name="customer_name" required placeholder="Исм Фамилия"
+               value="{{ customer_profile.name|default:'' }}"
                class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
                style="background:#ededf2;color:#1a1c1f;">
       </div>
       <div>
         <label class="block text-xs font-semibold mb-1.5" style="color:#5c5b5b;">Телефон <span style="color:#e31e24;">*</span></label>
         <input type="tel" name="customer_phone" id="phoneInput" required
-               placeholder="+998 90 123 45 67" value="+998 " inputmode="numeric"
+               placeholder="+998 90 123 45 67"
+               value="{% if customer_profile.phone %}{{ customer_profile.phone }}{% else %}+998 {% endif %}"
+               inputmode="numeric"
                class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
                style="background:#ededf2;color:#1a1c1f;">
       </div>
@@ -345,6 +350,7 @@
         </button>
         <!-- Street (auto-filled) -->
         <input type="text" id="streetInput" placeholder="Ko'cha, mahalla (xaritadan to'ldiriladi)"
+               value="{{ customer_profile.default_address.address|default:'' }}"
                class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
                style="background:#ededf2;color:#1a1c1f;display:block;margin-bottom:8px;">
         <!-- Dom / Podyezd / Kvartira — xarita tanlanganidan keyin ko'rinadi -->
@@ -452,17 +458,46 @@ function closeCartDrawer(){
   setTimeout(function(){d.classList.add('pointer-events-none');},320);
   document.body.style.overflow='';
 }
-var _addrMap = null, _addrMarker = null;
+var _addrMap = null, _addrMarker = null, _addrEngine = '';
 
 function _initAddrMap(lat, lon){
   if(!document.getElementById('addrMap')) return;
-  var centerLat = lat || 41.2995, centerLon = lon || 69.2401;
+  var cLat = lat || 41.2995, cLon = lon || 69.2401, zoom = lat ? 16 : 12;
+
+  /* ── Yandex xaritasi (asosiy) ── */
+  if(window.ymaps && _addrEngine !== 'leaflet'){
+    _addrEngine = 'yandex';
+    ymaps.ready(function(){
+      if(!_addrMap){
+        _addrMap = new ymaps.Map('addrMap', {
+          center: [cLat, cLon], zoom: zoom,
+          controls: ['zoomControl']
+        }, {suppressMapOpenBlock: true});
+        _addrMap.events.add('click', function(e){
+          var c = e.get('coords');
+          _onMapClick(c[0], c[1]);
+        });
+      } else {
+        _addrMap.setCenter([cLat, cLon], zoom);
+      }
+      if(lat && lon) _placeMapMarker(lat, lon);
+      setTimeout(function(){ _addrMap.container.fitToViewport(); }, 350);
+    });
+    /* Yandex 3 soniyada ochilmasa — Leaflet zaxira */
+    setTimeout(function(){
+      if(!_addrMap){ _addrEngine = 'leaflet'; _initAddrMap(lat, lon); }
+    }, 3000);
+    return;
+  }
+
+  /* ── Leaflet / OSM (zaxira) ── */
+  _addrEngine = 'leaflet';
   if(!_addrMap){
-    _addrMap = L.map('addrMap', {zoomControl:true, attributionControl:false}).setView([centerLat, centerLon], lat ? 16 : 13);
+    _addrMap = L.map('addrMap', {zoomControl:true, attributionControl:false}).setView([cLat, cLon], zoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(_addrMap);
     _addrMap.on('click', function(e){ _onMapClick(e.latlng.lat, e.latlng.lng); });
   } else {
-    _addrMap.setView([centerLat, centerLon], lat ? 16 : 13);
+    _addrMap.setView([cLat, cLon], zoom);
   }
   if(lat && lon) _placeMapMarker(lat, lon);
   setTimeout(function(){ _addrMap.invalidateSize(); }, 350);
@@ -470,11 +505,35 @@ function _initAddrMap(lat, lon){
 
 function _placeMapMarker(lat, lon){
   if(!_addrMap) return;
+
+  if(_addrEngine === 'yandex'){
+    if(_addrMarker){
+      _addrMarker.geometry.setCoordinates([lat, lon]);
+    } else {
+      _addrMarker = new ymaps.Placemark([lat, lon], {}, {
+        draggable: true, preset: 'islands#redDotIcon'
+      });
+      _addrMarker.events.add('dragend', function(){
+        var c = _addrMarker.geometry.getCoordinates();
+        document.getElementById('latInput').value = c[0];
+        document.getElementById('lonInput').value = c[1];
+        try{ sessionStorage.setItem('florella_lat', c[0]); sessionStorage.setItem('florella_lon', c[1]); }catch(e){}
+        _reverseGeocode(c[0], c[1]);
+      });
+      _addrMap.geoObjects.add(_addrMarker);
+    }
+    _addrMap.setCenter([lat, lon]);
+    return;
+  }
+
   if(_addrMarker) _addrMarker.setLatLng([lat, lon]);
   else {
     _addrMarker = L.marker([lat, lon], {draggable:true}).addTo(_addrMap);
     _addrMarker.on('dragend', function(){
       var p = _addrMarker.getLatLng();
+      document.getElementById('latInput').value = p.lat;
+      document.getElementById('lonInput').value = p.lng;
+      try{ sessionStorage.setItem('florella_lat', p.lat); sessionStorage.setItem('florella_lon', p.lng); }catch(e){}
       _reverseGeocode(p.lat, p.lng);
     });
   }
@@ -490,21 +549,16 @@ function _onMapClick(lat, lon){
 }
 
 function _reverseGeocode(lat, lon){
-  fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&addressdetails=1&lat='+lat+'&lon='+lon+'&accept-language=uz,ru')
+  fetch('/geo/reverse/?lat='+lat+'&lon='+lon)
   .then(function(r){ return r.json(); })
   .then(function(data){
-    var a = data.address || {};
-    var street = a.road || a.pedestrian || a.residential || '';
-    var parts = [];
-    if(street) parts.push(street);
-    if(a.suburb || a.neighbourhood || a.quarter) parts.push(a.suburb || a.neighbourhood || a.quarter);
-    if(a.city || a.town || a.village) parts.push(a.city || a.town || a.village);
-    var addr = parts.length ? parts.slice(0,3).join(', ') : (data.display_name||'').split(',').slice(0,3).join(', ');
+    if(!data.ok) throw new Error('geocode');
+    var addr = data.address || '';
     var st = document.getElementById('streetInput');
-    if(st) st.value = addr;
+    if(st && addr) st.value = addr;
     try{ sessionStorage.setItem('florella_addr', addr); }catch(e){}
     var hi = document.getElementById('houseInput');
-    if(a.house_number && hi) hi.value = a.house_number;
+    if(data.house && hi) hi.value = data.house;
     /* Dom/Podyezd/Kvartira maydonlarini ko'rsatish */
     var df = document.getElementById('addressDetailFields');
     if(df) df.style.display = '';

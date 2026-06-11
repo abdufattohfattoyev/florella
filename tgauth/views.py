@@ -6,7 +6,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from orders.telegram import get_config, _api_call
-from .models import TelegramLoginCode
+from .bot_logic import process_message
+from .models import TelegramLoginCode, TelegramCustomer, CustomerAddress
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ def login_view(request):
 
 
 def new_code(request):
-    """AJAX: yangi kod generatsiya qiladi."""
+    """AJAX: yangi token generatsiya qiladi."""
     obj = TelegramLoginCode.create_new()
     token, _ = get_config()
     bot_username = _get_bot_username(token) or 'florellazakaz_bot'
@@ -35,7 +36,7 @@ def new_code(request):
 
 
 def check_code(request, code):
-    """AJAX: kod tasdiqlanganini tekshiradi."""
+    """AJAX: token tasdiqlanganini tekshiradi."""
     try:
         obj = TelegramLoginCode.objects.get(code=code)
     except TelegramLoginCode.DoesNotExist:
@@ -43,17 +44,119 @@ def check_code(request, code):
     if obj.is_expired():
         return JsonResponse({'status': 'expired'})
     if obj.verified:
+        # Mijoz profilini yaratish yoki yangilash
+        customer, created = TelegramCustomer.objects.get_or_create(
+            telegram_id=obj.telegram_id,
+            defaults={'name': obj.tg_name, 'username': obj.tg_username},
+        )
+        if not created:
+            # Username yangilangan bo'lishi mumkin; ism profilda tahrirlangan bo'lsa saqlanadi
+            if obj.tg_username and customer.username != obj.tg_username:
+                customer.username = obj.tg_username
+            if not customer.name:
+                customer.name = obj.tg_name
+            customer.save()
+
         request.session['tg_id']       = obj.telegram_id
-        request.session['tg_name']     = obj.tg_name
+        request.session['tg_name']     = customer.name or obj.tg_name
         request.session['tg_username'] = obj.tg_username
+        name = customer.name or obj.tg_name
         obj.delete()
-        return JsonResponse({'status': 'ok', 'name': obj.tg_name})
+        return JsonResponse({'status': 'ok', 'name': name})
     return JsonResponse({'status': 'waiting'})
 
 
 def logout_view(request):
     request.session.flush()
     return redirect('menu:menu_list')
+
+
+def profile_view(request):
+    """Mijoz profili: tahrirlash + buyurtmalar tarixi."""
+    tg_id = request.session.get('tg_id')
+    if not tg_id:
+        return redirect('tgauth:login')
+
+    customer, _ = TelegramCustomer.objects.get_or_create(
+        telegram_id=tg_id,
+        defaults={
+            'name': request.session.get('tg_name', ''),
+            'username': request.session.get('tg_username', ''),
+        },
+    )
+
+    if request.method == 'POST':
+        from django.contrib import messages
+        action = request.POST.get('action', 'save_profile')
+
+        if action == 'save_profile':
+            name  = (request.POST.get('name') or '').strip()
+            phone = (request.POST.get('phone') or '').strip()
+            if name:
+                customer.name = name
+                request.session['tg_name'] = name
+            customer.phone = phone
+            customer.save()
+            messages.success(request, 'Profil saqlandi!')
+
+        elif action == 'add_address':
+            title   = (request.POST.get('title') or '').strip()
+            street  = (request.POST.get('street') or '').strip()
+            house   = (request.POST.get('house') or '').strip()
+            podyezd = (request.POST.get('podyezd') or '').strip()
+            apt     = (request.POST.get('apartment') or '').strip()
+
+            def _coord(field):
+                try:
+                    return round(float(request.POST.get(field, '')), 6)
+                except (TypeError, ValueError):
+                    return None
+
+            if street:
+                # To'liq manzil: ko'cha + dom + podyezd + kvartira
+                full = street
+                if house:
+                    full += f', {house}-dom'
+                if podyezd:
+                    full += f', {podyezd}-podyezd'
+                if apt:
+                    full += f', {apt}-kvartira'
+                CustomerAddress.objects.create(
+                    customer=customer, title=title, address=full,
+                    latitude=_coord('latitude'), longitude=_coord('longitude'),
+                    is_default=not customer.addresses.exists(),
+                )
+                messages.success(request, 'Manzil qo\'shildi!')
+
+        elif action == 'del_address':
+            CustomerAddress.objects.filter(
+                pk=request.POST.get('addr_id'), customer=customer
+            ).delete()
+            messages.success(request, 'Manzil o\'chirildi.')
+
+        elif action == 'set_default':
+            addr = CustomerAddress.objects.filter(
+                pk=request.POST.get('addr_id'), customer=customer
+            ).first()
+            if addr:
+                addr.is_default = True
+                addr.save()
+                messages.success(request, f'"{addr.title or addr.address[:30]}" asosiy manzil qilindi.')
+
+        return redirect('tgauth:profile')
+
+    from orders.models import Order
+    orders = (
+        Order.objects.filter(tg_id=tg_id)
+        .prefetch_related('items__menu_item')
+        .order_by('-created_at')[:30]
+    )
+
+    return render(request, 'tgauth/profile.html', {
+        'customer': customer,
+        'orders': orders,
+        'addresses': customer.addresses.all(),
+    })
 
 
 @csrf_exempt
@@ -69,64 +172,12 @@ def bot_webhook(request):
     if not message:
         return JsonResponse({'ok': True})
 
-    chat_id = message.get('chat', {}).get('id')
-    text    = (message.get('text') or '').strip().upper()
-    from_   = message.get('from', {})
-    name    = (from_.get('first_name') or '') + (' ' + (from_.get('last_name') or '')).rstrip()
-    username = from_.get('username', '')
-
     token, _ = get_config()
-    if not token:
-        return JsonResponse({'ok': True})
-
-    # /start komandasi — yordam xabari
-    if text.startswith('/START'):
-        _api_call(token, 'sendMessage', {
-            'chat_id': chat_id,
-            'text': (
-                '👋 Salom! Men Florella Cafe login botiman.\n\n'
-                'Saytdagi kodni (masalan: FL-1234) yuboring — tizimga kirasiz.'
-            ),
-        })
-        return JsonResponse({'ok': True})
-
-    # FL-XXXX formatidagi kod
-    if text.startswith('FL-') and len(text) == 7:
+    if token:
         try:
-            obj = TelegramLoginCode.objects.get(code=text, verified=False)
-        except TelegramLoginCode.DoesNotExist:
-            _api_call(token, 'sendMessage', {
-                'chat_id': chat_id,
-                'text': '❌ Kod topilmadi yoki muddati o\'tgan. Saytda yangi kod oling.',
-            })
-            return JsonResponse({'ok': True})
-
-        if obj.is_expired():
-            obj.delete()
-            _api_call(token, 'sendMessage', {
-                'chat_id': chat_id,
-                'text': '⏰ Kodning muddati o\'tdi (5 daqiqa). Saytda yangi kod oling.',
-            })
-            return JsonResponse({'ok': True})
-
-        obj.telegram_id = chat_id
-        obj.tg_name     = name.strip() or str(chat_id)
-        obj.tg_username = username
-        obj.verified    = True
-        obj.save()
-
-        display = f'@{username}' if username else name.strip() or str(chat_id)
-        _api_call(token, 'sendMessage', {
-            'chat_id': chat_id,
-            'text': f'✅ Muvaffaqiyatli! Florella Cafe ga xush kelibsiz, {display}!\n\nSaytga qaytib buyurtma bering.',
-        })
-        return JsonResponse({'ok': True})
-
-    # Noto'g'ri xabar
-    _api_call(token, 'sendMessage', {
-        'chat_id': chat_id,
-        'text': '🤔 Tushunmadim. Saytdagi FL-XXXX kodini yuboring.',
-    })
+            process_message(token, message)
+        except Exception as e:
+            logger.exception('Webhook xatosi: %s', e)
     return JsonResponse({'ok': True})
 
 
