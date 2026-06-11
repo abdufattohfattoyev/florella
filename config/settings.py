@@ -108,9 +108,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
 TELEGRAM_ADMIN_IDS = os.environ.get('TELEGRAM_ADMIN_IDS', '')
 
-# ─── Yandex Geocoder (manzil aniqlash — uy raqamigacha) ─────────────────────
-# Bepul kalit: developer.tech.yandex.ru -> JavaScript API va Geocoder HTTP API
+# ─── Yandex xaritalar ────────────────────────────────────────────────────────
+# developer.tech.yandex.ru: API Геокодера (manzil aniqlash) + JavaScript API (xarita)
 YANDEX_GEOCODER_KEY = os.environ.get('YANDEX_GEOCODER_KEY', '')
+YANDEX_MAPS_JS_KEY = os.environ.get('YANDEX_MAPS_JS_KEY', '')
 
 # ─── Jazzmin ───────────────────────────────────────────────────────────────
 JAZZMIN_SETTINGS = {
