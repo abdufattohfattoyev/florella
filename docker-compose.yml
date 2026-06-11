@@ -14,6 +14,21 @@ services:
     networks:
       - samsebweb_app-network
 
+  # Telegram login bot — long polling, sayt bilan birga ishga tushadi
+  florella-bot:
+    build: .
+    command: python manage.py tgbot
+    volumes:
+      - ./media:/app/media
+      - ./db.sqlite3:/app/db.sqlite3
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      - florella
+    networks:
+      - samsebweb_app-network
+
 networks:
   samsebweb_app-network:
     external: true
