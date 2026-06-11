@@ -41,10 +41,23 @@ def google_verify(request):
     )
 
 
+def yandex_verify(request):
+    return HttpResponse(
+        "<html>\n"
+        "    <head>\n"
+        '        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">\n'
+        "    </head>\n"
+        "    <body>Verification: 9b61f8e28b2e9825</body>\n"
+        "</html>",
+        content_type="text/html",
+    )
+
+
 urlpatterns = [
     path('robots.txt', robots_txt),
     path('sitemap.xml', sitemap_xml),
     path('googleb4718b94f5496dc1.html', google_verify),
+    path('yandex_9b61f8e28b2e9825.html', yandex_verify),
     path('admin/', admin.site.urls),
     path('', include('menu.urls')),
     path('orders/', include('orders.urls')),
