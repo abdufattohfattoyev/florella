@@ -183,6 +183,46 @@
       Menuga qaytish
     </a>
 
+    {% if order.status == 'new' %}
+    <!-- ── Cancel button ── -->
+    <button onclick="document.getElementById('cancelModal').style.display='flex'"
+            style="display:flex;align-items:center;justify-content:center;gap:8px;
+                   width:100%;background:#1a1c1f;color:#fff;padding:16px;border-radius:18px;
+                   border:none;cursor:pointer;font-size:15px;font-weight:700;margin-top:10px;">
+      <span class="material-symbols-outlined" style="font-size:20px;">cancel</span>
+      Zakazni bekor qilish
+    </button>
+
+    <!-- ── Cancel confirm modal ── -->
+    <div id="cancelModal"
+         style="display:none;position:fixed;inset:0;z-index:200;
+                align-items:center;justify-content:center;padding:16px;
+                background:rgba(0,0,0,.55);">
+      <div style="background:#fff;border-radius:22px;padding:28px 20px;width:100%;max-width:360px;text-align:center;">
+        <span class="material-symbols-outlined" style="font-size:44px;color:#e31e24;margin-bottom:10px;display:block;">help</span>
+        <p style="font-size:17px;font-weight:800;color:#1a1c1f;margin-bottom:8px;">Zakazni bekor qilasizmi?</p>
+        <p style="font-size:13px;color:#5c5b5b;margin-bottom:24px;line-height:1.5;">
+          Buyurtma № {{ order.pk }} bekor qilinadi. Bu amalni ortga qaytarib bo'lmaydi.
+        </p>
+        <div style="display:flex;gap:10px;">
+          <button onclick="document.getElementById('cancelModal').style.display='none'"
+                  style="flex:1;padding:14px;border-radius:14px;border:none;cursor:pointer;
+                         background:#ededf2;color:#1a1c1f;font-size:14px;font-weight:700;">
+            Yo'q
+          </button>
+          <form method="POST" action="{% url 'orders:order_cancel' order.pk %}" style="flex:1;">
+            {% csrf_token %}
+            <button type="submit"
+                    style="width:100%;padding:14px;border-radius:14px;border:none;cursor:pointer;
+                           background:#1a1c1f;color:#fff;font-size:14px;font-weight:700;">
+              Ha, bekor qilish
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
   </div>
 </main>
 {% endblock %}

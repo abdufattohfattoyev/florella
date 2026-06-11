@@ -55,6 +55,20 @@
 
   /* Search overlay */
   #searchOverlay { padding-left: 24px !important; padding-right: 24px !important; }
+
+  /* ── Cart bar — markazda, cheklangan kenglik ── */
+  #cartBar {
+    bottom: 20px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    display: flex;
+    justify-content: center;
+  }
+  #cartBar > div {
+    width: 100%;
+    max-width: 500px;
+    border-radius: 20px !important;
+  }
 }
 
 /* ── Desktop: 1024px ── */

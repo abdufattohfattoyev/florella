@@ -19,6 +19,8 @@
   {% load static %}
   <link rel="stylesheet" href="{% static 'css/tailwind.css' %}?v=2">
   <link rel="stylesheet" href="{% static 'css/desktop.css' %}?v=1">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   {% block extra_head %}{% endblock %}
 </head>
@@ -130,6 +132,7 @@
       <div style="min-width:0;">
         <p id="cartBarCount" style="font-size:12px;font-weight:600;opacity:.85;line-height:1.2;">0 та махсулот</p>
         <p id="cartBarTotal" style="font-size:16px;font-weight:900;line-height:1.2;">0 сўм</p>
+        <p id="cartBarRemain" style="font-size:10px;font-weight:700;opacity:.9;line-height:1.3;display:none;"></p>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.2);
@@ -168,8 +171,17 @@
     </div>
     <!-- Items -->
     <div id="cartItems" class="flex-1 overflow-y-auto" style="padding:8px 16px;min-height:100px;"></div>
+    <!-- Upsell sektsiyasi — cartItems tashqarisida, JS tomonidan to'ldiriladi -->
+    <div id="cartUpsell" style="display:none;border-top:1px solid rgba(231,189,184,.45);
+                                padding:12px 16px 4px;">
+      <p id="cartUpsellTitle" style="font-size:12px;font-weight:700;color:#5c5b5b;margin-bottom:10px;"></p>
+      <div id="cartUpsellItems" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;"
+           class="no-scrollbar"></div>
+    </div>
     <!-- Footer -->
     <div class="flex-shrink-0" style="padding:14px 16px 28px;border-top:1px solid #e7bdb8;">
+      <!-- Minimal zakaz banneri -->
+      <div id="minOrderBanner" style="display:none;margin-bottom:12px;"></div>
       <div class="flex items-center justify-between" style="margin-bottom:12px;">
         <span style="font-size:14px;font-weight:600;color:#5c5b5b;">Жами тўлов</span>
         <span id="cartTotal" style="font-size:20px;font-weight:900;color:#ba0013;">0 сўм</span>
@@ -190,9 +202,12 @@
 <div id="orderModal" class="fixed inset-0 z-[70] pointer-events-none">
   <div id="orderBackdrop" onclick="closeOrderModal()"
        class="absolute inset-0 transition-[background-color] duration-300" style="background:transparent;"></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:center;pointer-events:none;">
   <div id="orderPanel"
-       class="absolute bottom-0 left-0 right-0 overflow-y-auto"
-       style="background:#f9f9fe;border-radius:24px 24px 0 0;max-height:94vh;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,0,.67,0);">
+       class="overflow-y-auto"
+       style="width:100%;max-width:520px;pointer-events:auto;
+              background:#f9f9fe;border-radius:24px 24px 0 0;max-height:94vh;
+              transform:translateY(100%);transition:transform .3s cubic-bezier(.32,0,.67,0);">
     <div class="flex justify-center pt-3 pb-2">
       <div class="w-10 h-1 rounded-full" style="background:#e7bdb8;"></div>
     </div>
@@ -247,25 +262,46 @@
       <!-- Yetkazish manzili -->
       <div id="fieldAddress">
         <label class="block text-xs font-semibold mb-1.5" style="color:#5c5b5b;">Yetkazish manzili <span style="color:#e31e24;">*</span></label>
-        <div class="flex gap-2">
-          <textarea id="streetInput" rows="2"
-                    placeholder="Кўча, маҳалла…"
-                    class="flex-1 rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent resize-none"
-                    style="background:#ededf2;color:#1a1c1f;min-width:0;"></textarea>
-          <button type="button" id="gpsBtn" onclick="detectModalLocation()"
-                  class="flex items-center justify-center rounded-2xl active:scale-95 transition-transform flex-shrink-0"
-                  style="width:48px;background:#fff0f1;border:2px solid #e31e24;cursor:pointer;"
-                  title="GPS orqali aniqlash">
-            <span id="gpsBtnIcon" class="material-symbols-outlined" style="font-size:20px;color:#e31e24;">my_location</span>
-          </button>
-        </div>
-        <div class="flex gap-2 mt-2">
-          <input type="text" id="houseInput" placeholder="Uy №" inputmode="numeric"
-                 class="rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
-                 style="background:#ededf2;color:#1a1c1f;width:40%;min-width:0;">
-          <input type="text" id="aptInput" placeholder="Xonadon / podyezd"
-                 class="rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
-                 style="background:#ededf2;color:#1a1c1f;width:60%;min-width:0;">
+        <!-- Map -->
+        <div id="addrMap" style="height:200px;border-radius:16px;overflow:hidden;border:2px solid #e7bdb8;margin-bottom:8px;"></div>
+        <p style="font-size:11px;color:#5c5b5b;text-align:center;margin-bottom:8px;">
+          <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;color:#e31e24;">touch_app</span>
+          Xaritada manzilingizni bosing yoki GPS tugmasini bosing
+        </p>
+        <!-- GPS button -->
+        <button type="button" id="gpsBtn" onclick="detectModalLocation()"
+                style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;
+                       padding:11px;border-radius:14px;border:2px solid #e31e24;
+                       background:#fff0f1;cursor:pointer;margin-bottom:10px;">
+          <span id="gpsBtnIcon" class="material-symbols-outlined" style="font-size:18px;color:#e31e24;">my_location</span>
+          <span style="font-size:13px;font-weight:700;color:#e31e24;">GPS orqali aniqlash</span>
+        </button>
+        <!-- Street (auto-filled) -->
+        <input type="text" id="streetInput" placeholder="Ko'cha, mahalla (xaritadan to'ldiriladi)"
+               class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+               style="background:#ededf2;color:#1a1c1f;display:block;margin-bottom:8px;">
+        <!-- Dom / Podyezd / Kvartira — xarita tanlanganidan keyin ko'rinadi -->
+        <div id="addressDetailFields" style="display:none;">
+          <div style="display:flex;gap:8px;">
+            <div style="flex:1;">
+              <label style="font-size:11px;color:#5c5b5b;font-weight:600;display:block;margin-bottom:4px;">Dom №</label>
+              <input type="text" id="houseInput" placeholder="1" inputmode="numeric"
+                     class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+                     style="background:#ededf2;color:#1a1c1f;">
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:11px;color:#5c5b5b;font-weight:600;display:block;margin-bottom:4px;">Podyezd №</label>
+              <input type="text" id="podezdInput" placeholder="1" inputmode="numeric"
+                     class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+                     style="background:#ededf2;color:#1a1c1f;">
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:11px;color:#5c5b5b;font-weight:600;display:block;margin-bottom:4px;">Kvartira №</label>
+              <input type="text" id="aptInput" placeholder="10" inputmode="numeric"
+                     class="w-full rounded-2xl px-4 py-3 text-sm font-medium border-2 border-transparent"
+                     style="background:#ededf2;color:#1a1c1f;">
+            </div>
+          </div>
         </div>
         <p id="gpsHint" class="text-xs mt-1.5 hidden" style="color:#5c5b5b;"></p>
       </div>
@@ -327,10 +363,12 @@
       </div>
     </form>
   </div>
+  </div><!-- /centering wrapper -->
 </div>
 
 <!-- ═══ SCRIPTS ═══ -->
-<script src="{% static 'js/cart.js' %}?v=2"></script>
+<script>window._MENU_ITEMS = {{ upsell_items_json|safe }};</script>
+<script src="{% static 'js/cart.js' %}?v=3"></script>
 <script>
 /* ── Cart Drawer ── */
 function openCartDrawer(){
@@ -347,6 +385,68 @@ function closeCartDrawer(){
   setTimeout(function(){d.classList.add('pointer-events-none');},320);
   document.body.style.overflow='';
 }
+var _addrMap = null, _addrMarker = null;
+
+function _initAddrMap(lat, lon){
+  if(!document.getElementById('addrMap')) return;
+  var centerLat = lat || 41.2995, centerLon = lon || 69.2401;
+  if(!_addrMap){
+    _addrMap = L.map('addrMap', {zoomControl:true, attributionControl:false}).setView([centerLat, centerLon], lat ? 16 : 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(_addrMap);
+    _addrMap.on('click', function(e){ _onMapClick(e.latlng.lat, e.latlng.lng); });
+  } else {
+    _addrMap.setView([centerLat, centerLon], lat ? 16 : 13);
+  }
+  if(lat && lon) _placeMapMarker(lat, lon);
+  setTimeout(function(){ _addrMap.invalidateSize(); }, 350);
+}
+
+function _placeMapMarker(lat, lon){
+  if(!_addrMap) return;
+  if(_addrMarker) _addrMarker.setLatLng([lat, lon]);
+  else {
+    _addrMarker = L.marker([lat, lon], {draggable:true}).addTo(_addrMap);
+    _addrMarker.on('dragend', function(){
+      var p = _addrMarker.getLatLng();
+      _reverseGeocode(p.lat, p.lng);
+    });
+  }
+  _addrMap.panTo([lat, lon]);
+}
+
+function _onMapClick(lat, lon){
+  document.getElementById('latInput').value = lat;
+  document.getElementById('lonInput').value = lon;
+  try{ sessionStorage.setItem('florella_lat', lat); sessionStorage.setItem('florella_lon', lon); }catch(e){}
+  _placeMapMarker(lat, lon);
+  _reverseGeocode(lat, lon);
+}
+
+function _reverseGeocode(lat, lon){
+  fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&addressdetails=1&lat='+lat+'&lon='+lon+'&accept-language=uz,ru')
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    var a = data.address || {};
+    var street = a.road || a.pedestrian || a.residential || '';
+    var parts = [];
+    if(street) parts.push(street);
+    if(a.suburb || a.neighbourhood || a.quarter) parts.push(a.suburb || a.neighbourhood || a.quarter);
+    if(a.city || a.town || a.village) parts.push(a.city || a.town || a.village);
+    var addr = parts.length ? parts.slice(0,3).join(', ') : (data.display_name||'').split(',').slice(0,3).join(', ');
+    var st = document.getElementById('streetInput');
+    if(st) st.value = addr;
+    try{ sessionStorage.setItem('florella_addr', addr); }catch(e){}
+    var hi = document.getElementById('houseInput');
+    if(a.house_number && hi) hi.value = a.house_number;
+    /* Dom/Podyezd/Kvartira maydonlarini ko'rsatish */
+    var df = document.getElementById('addressDetailFields');
+    if(df) df.style.display = '';
+  }).catch(function(){
+    var df = document.getElementById('addressDetailFields');
+    if(df) df.style.display = '';
+  });
+}
+
 function openOrderModal(){
   closeCartDrawer();
   setTimeout(function(){
@@ -355,24 +455,28 @@ function openOrderModal(){
     b.style.background='rgba(0,0,0,.5)';
     p.style.transform='translateY(0)';
     document.body.style.overflow='hidden';
-    /* Geolokatsiya manzili + koordinatalarni avtomatik to'ldirish */
+    /* Saqlangan koordinatalar bilan xaritani ishga tushirish */
     try{
-      var saved=sessionStorage.getItem('florella_addr');
-      var st=document.getElementById('streetInput');
-      if(saved && st && !st.value) st.value=saved;
       var lat=sessionStorage.getItem('florella_lat');
       var lon=sessionStorage.getItem('florella_lon');
+      var saved=sessionStorage.getItem('florella_addr');
+      var st=document.getElementById('streetInput');
       if(lat) document.getElementById('latInput').value=lat;
       if(lon) document.getElementById('lonInput').value=lon;
-    }catch(e){}
+      if(saved && st && !st.value){
+        st.value=saved;
+        var df=document.getElementById('addressDetailFields');
+        if(df) df.style.display='';
+      }
+      _initAddrMap(lat ? +lat : null, lon ? +lon : null);
+    }catch(e){ _initAddrMap(null,null); }
   },320);
 }
 
-/* ── Modal ichida GPS: uy raqamigacha aniqlash ── */
+/* ── Modal ichida GPS ── */
 function detectModalLocation(){
   var icon=document.getElementById('gpsBtnIcon');
   var hint=document.getElementById('gpsHint');
-  var st=document.getElementById('streetInput');
   function showHint(t,c){ hint.textContent=t; hint.style.color=c||'#5c5b5b'; hint.classList.remove('hidden'); }
   if(!navigator.geolocation){ showHint('Brauzer GPS ni qo\'llab-quvvatlamaydi'); return; }
   icon.textContent='sync';
@@ -382,42 +486,14 @@ function detectModalLocation(){
     var lat=pos.coords.latitude, lon=pos.coords.longitude;
     document.getElementById('latInput').value=lat;
     document.getElementById('lonInput').value=lon;
-    try{
-      sessionStorage.setItem('florella_lat',lat);
-      sessionStorage.setItem('florella_lon',lon);
-    }catch(e){}
-    fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&addressdetails=1&lat='+lat+'&lon='+lon+'&accept-language=uz,ru')
-    .then(function(r){return r.json();})
-    .then(function(data){
-      var a=data.address||{};
-      var street=a.road||a.pedestrian||a.residential||'';
-      var parts=[];
-      if(street) parts.push(street);
-      if(a.suburb||a.neighbourhood||a.quarter) parts.push(a.suburb||a.neighbourhood||a.quarter);
-      if(a.city||a.town||a.village) parts.push(a.city||a.town||a.village);
-      var addr=parts.length?parts.slice(0,3).join(', '):(data.display_name||'').split(',').slice(0,3).join(', ');
-      if(addr){ st.value=addr; try{sessionStorage.setItem('florella_addr',addr);}catch(e){} }
-      icon.textContent='my_location'; icon.style.animation='';
-      var hi=document.getElementById('houseInput');
-      if(a.house_number){
-        hi.value=a.house_number;
-        showHint('✓ Manzil aniqlandi — uy raqamini tekshiring','#27ae60');
-      } else if(addr){
-        /* Xaritada uy raqami yo'q — mijoz o'zi kiritadi */
-        showHint('✓ Ko\'cha aniqlandi. Uy raqamini kiriting 👇','#e31e24');
-        hi.focus();
-        hi.style.borderColor='#e31e24';
-      } else {
-        showHint('Manzilni qo\'lda yozing');
-      }
-    })
-    .catch(function(){
-      icon.textContent='my_location'; icon.style.animation='';
-      showHint('GPS saqlandi ('+lat.toFixed(5)+', '+lon.toFixed(5)+') — manzilni qo\'lda yozing');
-    });
+    try{ sessionStorage.setItem('florella_lat',lat); sessionStorage.setItem('florella_lon',lon); }catch(e){}
+    _placeMapMarker(lat, lon);
+    _reverseGeocode(lat, lon);
+    icon.textContent='my_location'; icon.style.animation='';
+    showHint('✓ Manzil aniqlandi — Dom, Podyezd, Kvartira raqamlarini kiriting','#27ae60');
   },function(err){
     icon.textContent='location_off'; icon.style.animation='';
-    showHint(err.code===1?'GPS ruxsati berilmadi — manzilni qo\'lda yozing':'Manzil aniqlanmadi, qayta urinib ko\'ring');
+    showHint(err.code===1?'GPS ruxsati berilmadi — xaritadan tanlang':'Manzil aniqlanmadi, xaritadan tanlang');
   },{timeout:10000,enableHighAccuracy:true});
 }
 
@@ -466,8 +542,29 @@ function detectModalLocation(){
     }
     var dt=document.querySelector('[name="delivery_type"]:checked');
     var isDelivery=!dt||dt.value==='delivery';
+
+    /* Minimal zakaz tekshiruvi — faqat dostavka uchun */
+    if(isDelivery){
+      var cartTotal=cart.reduce(function(s,i){return s+i.price*i.quantity;},0);
+      if(cartTotal<60000){
+        e.preventDefault();
+        var minErr=document.getElementById('minOrderErr');
+        if(!minErr){
+          minErr=document.createElement('p');
+          minErr.id='minOrderErr';
+          minErr.style.cssText='color:#e31e24;font-size:12px;font-weight:700;text-align:center;padding:8px 12px;background:#fff0f1;border-radius:10px;';
+          var btnRow=form.querySelector('[type="submit"]').parentNode;
+          btnRow.parentNode.insertBefore(minErr, btnRow);
+        }
+        minErr.textContent='⚠️ Dostavka uchun minimal zakaz 60 000 сўм. Hozirgi summa: '+new Intl.NumberFormat('uz-UZ').format(Math.round(cartTotal))+' сўм';
+        minErr.scrollIntoView({behavior:'smooth',block:'center'});
+        return;
+      }
+    }
+
     var street=(document.getElementById('streetInput').value||'').trim();
     var house=(document.getElementById('houseInput').value||'').trim();
+    var podyezd=(document.getElementById('podezdInput')?document.getElementById('podezdInput').value||'':'').trim();
     var apt=(document.getElementById('aptInput').value||'').trim();
     if(isDelivery && !street){
       e.preventDefault();
@@ -476,12 +573,13 @@ function detectModalLocation(){
       st.style.borderColor='#e31e24';
       return;
     }
-    /* To'liq manzil: ko'cha + uy + xonadon */
+    /* To'liq manzil: ko'cha + dom + podyezd + kvartira */
     var full='';
     if(isDelivery){
       full=street;
-      if(house) full+=', '+house+'-uy';
-      if(apt)   full+=', '+apt+'-xonadon';
+      if(house)   full+=', '+house+'-dom';
+      if(podyezd) full+=', '+podyezd+'-podyezd';
+      if(apt)     full+=', '+apt+'-kvartira';
     }
     document.getElementById('fullAddressInput').value=full;
     if(!isDelivery){
@@ -581,6 +679,17 @@ window.updateCartUI=function(){
     if(count>0){
       if(barCount) barCount.textContent = count+' та махсулот';
       if(barTotal) barTotal.textContent = fmt2(total);
+      /* Minimal zakaz qoldig'i */
+      var barRemain = document.getElementById('cartBarRemain');
+      if(barRemain){
+        var remain = 60000 - total;
+        if(remain > 0){
+          barRemain.textContent = 'Yana ' + fmt2(remain) + ' kerak';
+          barRemain.style.display = '';
+        } else {
+          barRemain.style.display = 'none';
+        }
+      }
       bar.style.transform   = 'translateY(0)';
       bar.style.opacity     = '1';
       bar.style.pointerEvents = 'auto';

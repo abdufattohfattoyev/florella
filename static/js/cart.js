@@ -2,6 +2,7 @@
    Флорелла Кафе — Саватча логикаси
 ═══════════════════════════════════════ */
 const cart = [];
+const MIN_ORDER = 60000;
 
 const fmt = n =>
   new Intl.NumberFormat('uz-UZ').format(Math.round(n)) + ' сўм';
@@ -35,8 +36,9 @@ function updateCartUI() {
   if (els.countBot) els.countBot.textContent = count;
   if (els.total)    els.total.textContent = fmt(total);
   if (els.checkout) {
-    els.checkout.disabled = cart.length === 0;
-    els.checkout.style.opacity = cart.length === 0 ? '0.4' : '1';
+    const blocked = cart.length === 0 || total < MIN_ORDER;
+    els.checkout.disabled = blocked;
+    els.checkout.style.opacity = blocked ? '0.4' : '1';
   }
   if (els.dataIn) els.dataIn.value = JSON.stringify(cart);
 
@@ -94,6 +96,39 @@ function updateCartUI() {
     }
   }
 
+  /* ── Minimal zakaz banneri (faqat dostavka) ── */
+  const banner = document.getElementById('minOrderBanner');
+  if (banner && cart.length > 0) {
+    const remain = MIN_ORDER - total;
+    if (remain > 0) {
+      const pct = Math.min(100, Math.round((total / MIN_ORDER) * 100));
+      banner.style.display = '';
+      banner.innerHTML = `
+        <div style="background:#fff0f1;border-radius:14px;padding:10px 12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:12px;font-weight:600;color:#5c5b5b;">Dostavka uchun yetishmaydi</span>
+            <span style="font-size:12px;font-weight:800;color:#e31e24;">${fmt(remain)}</span>
+          </div>
+          <div style="height:6px;background:#f5c8c9;border-radius:999px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:#e31e24;border-radius:999px;transition:width .3s;"></div>
+          </div>
+        </div>`;
+    } else {
+      banner.style.display = '';
+      banner.innerHTML = `
+        <div style="background:#e8f9ee;border-radius:14px;padding:10px 12px;
+                    display:flex;align-items:center;gap:8px;">
+          <span class="material-symbols-outlined" style="font-size:18px;color:#27ae60;font-variation-settings:'FILL' 1;">check_circle</span>
+          <span style="font-size:12px;font-weight:700;color:#1a6b3a;">Minimal zakaz bajarildi ✓</span>
+        </div>`;
+    }
+  } else if (banner) {
+    banner.style.display = 'none';
+  }
+
+  /* ── Upsell tavsiyalar ── */
+  _updateUpsell();
+
   /* ── Modal summary ── */
   if (els.summary) {
     els.summary.innerHTML = cart.length === 0
@@ -116,6 +151,89 @@ function changeQty(id, price, delta) {
   if (idx === -1) return;
   cart[idx].quantity += delta;
   if (cart[idx].quantity <= 0) cart.splice(idx, 1);
+  updateCartUI();
+  if (typeof updateItemBadges === 'function') updateItemBadges();
+}
+
+/* ── Upsell logikasi ── */
+function _updateUpsell() {
+  const sec    = document.getElementById('cartUpsell');
+  const title  = document.getElementById('cartUpsellTitle');
+  const wrap   = document.getElementById('cartUpsellItems');
+  const all    = window._MENU_ITEMS || [];
+  if (!sec || !wrap || cart.length === 0 || all.length === 0) {
+    if (sec) sec.style.display = 'none';
+    return;
+  }
+
+  const cartIds  = new Set(cart.map(i => i.id));
+  const cartCats = new Set(cart.map(i => i.category));
+
+  const PRIORITY = ['ichimliklar', 'zakuskalar', 'kokteyl', 'setlar', 'rolllar', 'pizzalar'];
+  const missingCat = PRIORITY.find(c => !cartCats.has(c));
+
+  let pool, label;
+  if (missingCat) {
+    pool  = all.filter(i => i.category === missingCat && !cartIds.has(i.id));
+    const labels = {
+      ichimliklar: '🥤 Ichimlik qo\'shing',
+      zakuskalar:  '🥢 Zakuska qo\'shing',
+      kokteyl:     '🍹 Kokteyl qo\'shing',
+      setlar:      '🎁 Set qo\'shing',
+      rolllar:     '🍱 Roll qo\'shing',
+      pizzalar:    '🍕 Pizza qo\'shing',
+    };
+    label = labels[missingCat] || 'Qo\'shib ko\'ring';
+  } else {
+    pool  = all.filter(i => !cartIds.has(i.id));
+    label = '⭐ Ko\'p sotilganlar';
+  }
+
+  const picks = pool.slice(0, 6);
+  if (picks.length === 0) { sec.style.display = 'none'; return; }
+
+  title.textContent = label;
+  wrap.innerHTML = picks.map(item => {
+    const imgHtml = item.image
+      ? `<img src="/media/${item.image}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`
+      : `<span style="font-size:1.6rem;">${EMOJI[item.category] || '🍽️'}</span>`;
+    return `
+      <div style="flex:none;width:110px;background:#fff;border-radius:14px;
+                  box-shadow:0 2px 8px rgba(0,0,0,.07);overflow:hidden;">
+        <div style="height:72px;background:#f3f3f8;display:flex;align-items:center;
+                    justify-content:center;overflow:hidden;">
+          ${imgHtml}
+        </div>
+        <div style="padding:6px 8px 8px;">
+          <p style="font-size:11px;font-weight:700;color:#1a1c1f;line-height:1.3;
+                    overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;
+                    -webkit-box-orient:vertical;margin-bottom:4px;">${item.name}</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:10px;font-weight:800;color:#ba0013;">${fmt(item.price)}</span>
+            <button style="width:22px;height:22px;border-radius:6px;background:#e31e24;
+                           border:none;cursor:pointer;display:flex;align-items:center;
+                           justify-content:center;flex-shrink:0;"
+                    onclick="_upsellAdd(${item.id})">
+              <span class="material-symbols-outlined" style="font-size:14px;color:#fff;">add</span>
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  sec.style.display = '';
+}
+
+function _upsellAdd(id) {
+  const all  = window._MENU_ITEMS || [];
+  const item = all.find(i => i.id === id);
+  if (!item) return;
+  const ex = cart.find(i => i.id === id);
+  if (ex) { ex.quantity++; }
+  else {
+    cart.push({ id: item.id, name: item.name, price: item.price,
+                quantity: 1, image: item.image || '', category: item.category });
+  }
   updateCartUI();
   if (typeof updateItemBadges === 'function') updateItemBadges();
 }

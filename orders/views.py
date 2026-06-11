@@ -64,3 +64,16 @@ def order_create(request):
 def order_success(request, pk):
     order = get_object_or_404(Order, pk=pk)
     return render(request, 'orders/order_success.html', {'order': order})
+
+
+def order_cancel(request, pk):
+    if request.method == 'POST':
+        order = get_object_or_404(Order, pk=pk)
+        if order.status == 'new':
+            order.status = 'cancelled'
+            order.save()
+            messages.success(request, f'Buyurtma #{order.pk} bekor qilindi.')
+        else:
+            messages.error(request, 'Bu buyurtmani bekor qilib bo\'lmaydi.')
+        return redirect('menu:menu_list')
+    return redirect('orders:order_success', pk=pk)
