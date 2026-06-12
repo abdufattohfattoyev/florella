@@ -89,17 +89,44 @@ def order_create(request):
 
 def order_success(request, pk):
     order = get_object_or_404(Order, pk=pk)
-    return render(request, 'orders/order_success.html', {'order': order})
+    from django.core.signing import Signer
+    signer = Signer()
+    cancel_token = signer.sign(str(pk))
+    cancel_expires_ms = int(order.created_at.timestamp() * 1000) + 120_000
+    return render(request, 'orders/order_success.html', {
+        'order': order,
+        'cancel_token': cancel_token,
+        'cancel_expires_ms': cancel_expires_ms,
+    })
 
 
 def order_cancel(request, pk):
-    if request.method == 'POST':
-        order = get_object_or_404(Order, pk=pk)
-        if order.status == 'new':
-            order.status = 'cancelled'
-            order.save()
-            messages.success(request, f'Buyurtma #{order.pk} bekor qilindi.')
-        else:
-            messages.error(request, 'Bu buyurtmani bekor qilib bo\'lmaydi.')
-        return redirect('menu:menu_list')
-    return redirect('orders:order_success', pk=pk)
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    from django.core.signing import Signer, BadSignature
+    from django.utils import timezone
+    from .telegram import send_cancel_notification
+
+    token = request.POST.get('token', '')
+    signer = Signer()
+    try:
+        signed_pk = signer.unsign(token)
+        if str(pk) != signed_pk:
+            return JsonResponse({'error': "Token noto'g'ri"}, status=403)
+    except BadSignature:
+        return JsonResponse({'error': "Token noto'g'ri"}, status=403)
+
+    order = get_object_or_404(Order, pk=pk)
+
+    if order.status == 'cancelled':
+        return JsonResponse({'error': 'Buyurtma allaqachon bekor qilingan'}, status=400)
+
+    elapsed = (timezone.now() - order.created_at).total_seconds()
+    if elapsed > 120:
+        return JsonResponse({'error': "Bekor qilish muddati o'tdi (2 daqiqa)"}, status=400)
+
+    order.status = 'cancelled'
+    order.save()
+    send_cancel_notification(order)
+    return JsonResponse({'ok': True})

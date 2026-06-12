@@ -882,5 +882,44 @@ _chkObs.observe(document.getElementById('checkoutBtn'),{attributes:true,attribut
 </script>
 
 {% block extra_js %}{% endblock %}
+
+<script>
+/* ── Oxirgi buyurtma banneri — menyuga qaytganda eslatadi ── */
+(function(){
+  try{
+    var pk     = localStorage.getItem('fl_last_pk');
+    var exp    = +(localStorage.getItem('fl_last_exp')||0);
+    var status = localStorage.getItem('fl_last_status');
+    if(!pk || !exp || status==='cancelled') return;
+    /* 30 daqiqadan ko'p o'tsa yashirish (exp = yaratilgan+2min, shuning uchun +28min = 30min jami) */
+    if(Date.now() > exp + 28*60*1000){ try{localStorage.removeItem('fl_last_pk');}catch(e){} return; }
+    /* Faqat menyuda ko'rsatish (orders sahifasida emas) */
+    if(window.location.pathname.indexOf('/orders/')!==-1) return;
+
+    var banner = document.createElement('a');
+    banner.href = '/orders/success/'+pk+'/';
+    banner.style.cssText =
+      'position:fixed;top:64px;left:0;right:0;z-index:48;'+
+      'background:#1a1c1f;color:#fff;padding:11px 16px;'+
+      'display:flex;align-items:center;gap:10px;text-decoration:none;'+
+      'box-shadow:0 2px 8px rgba(0,0,0,.25);';
+    banner.innerHTML =
+      '<span class="material-symbols-outlined" style="font-size:18px;color:#fcaf19;flex-shrink:0;">receipt_long</span>'+
+      '<span style="flex:1;font-size:13px;font-weight:700;">Buyurtma №'+pk+' — kuzatish</span>'+
+      '<span class="material-symbols-outlined" style="font-size:18px;opacity:.55;">chevron_right</span>';
+    var cl = document.createElement('button');
+    cl.style.cssText='background:transparent;border:none;cursor:pointer;padding:4px;'+
+      'color:rgba(255,255,255,.45);line-height:1;flex-shrink:0;';
+    cl.innerHTML='<span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle;">close</span>';
+    cl.onclick=function(e){
+      e.preventDefault(); e.stopPropagation();
+      banner.remove();
+      try{localStorage.removeItem('fl_last_pk');}catch(ex){}
+    };
+    banner.appendChild(cl);
+    document.body.appendChild(banner);
+  }catch(e){}
+})();
+</script>
 </body>
 </html>

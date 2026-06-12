@@ -143,6 +143,38 @@ def send_order_notification(order):
     threading.Thread(target=_send, args=(order.pk,), daemon=True).start()
 
 
+def _send_cancel(order_id):
+    from .models import Order
+    try:
+        order = Order.objects.get(pk=order_id)
+    except Order.DoesNotExist:
+        return
+    token, chat_ids = get_config()
+    if not token or not chat_ids:
+        return
+    pay_icon = '💵' if order.payment_type == 'cash' else '💳'
+    text = (
+        f'❌ <b>Buyurtma №{order.pk} BEKOR QILINDI</b>\n\n'
+        f'👤 {order.customer_name}\n'
+        f'📞 {order.customer_phone}\n'
+        f'{pay_icon} {order.get_payment_type_display()}\n'
+        f'💰 <b>Jami: {int(order.total_price):,} so\'m</b>'.replace(',', ' ')
+    )
+    for chat_id in chat_ids:
+        _api_call(token, 'sendMessage', {
+            'chat_id': chat_id,
+            'text': text,
+            'parse_mode': 'HTML',
+        })
+
+
+def send_cancel_notification(order):
+    token, chat_ids = get_config()
+    if not token or not chat_ids:
+        return
+    threading.Thread(target=_send_cancel, args=(order.pk,), daemon=True).start()
+
+
 def send_test_message():
     """Admin paneldagi 'Test yuborish' tugmasi uchun. Natija: (ok, xabar)."""
     token, chat_ids = get_config()

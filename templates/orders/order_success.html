@@ -37,7 +37,7 @@
       </div>
       <div style="flex:1;">
         <p style="font-size:11px;color:#5c5b5b;margin-bottom:2px;">Holat</p>
-        <p style="font-size:14px;font-weight:800;color:#3498db;">{{ order.get_status_display }}</p>
+        <p id="orderStatusText" style="font-size:14px;font-weight:800;color:#3498db;">{{ order.get_status_display }}</p>
       </div>
       <div style="background:#eaf4fd;padding:6px 12px;border-radius:10px;">
         <span style="font-size:11px;font-weight:700;color:#3498db;">Yetkazib berish</span>
@@ -53,7 +53,7 @@
       </div>
       <div style="flex:1;">
         <p style="font-size:11px;color:#5c5b5b;margin-bottom:2px;">Holat</p>
-        <p style="font-size:14px;font-weight:800;color:#27ae60;">{{ order.get_status_display }}</p>
+        <p id="orderStatusText" style="font-size:14px;font-weight:800;color:#27ae60;">{{ order.get_status_display }}</p>
       </div>
       <div style="background:#e8f9ee;padding:6px 12px;border-radius:10px;">
         <span style="font-size:11px;font-weight:700;color:#27ae60;">Olib ketish</span>
@@ -183,46 +183,154 @@
       Menuga qaytish
     </a>
 
-    {% if order.status == 'new' %}
-    <!-- ── Cancel button ── -->
-    <button onclick="document.getElementById('cancelModal').style.display='flex'"
-            style="display:flex;align-items:center;justify-content:center;gap:8px;
-                   width:100%;background:#1a1c1f;color:#fff;padding:16px;border-radius:18px;
-                   border:none;cursor:pointer;font-size:15px;font-weight:700;margin-top:10px;">
-      <span class="material-symbols-outlined" style="font-size:20px;">cancel</span>
-      Zakazni bekor qilish
-    </button>
-
-    <!-- ── Cancel confirm modal ── -->
-    <div id="cancelModal"
-         style="display:none;position:fixed;inset:0;z-index:200;
-                align-items:center;justify-content:center;padding:16px;
-                background:rgba(0,0,0,.55);">
-      <div style="background:#fff;border-radius:22px;padding:28px 20px;width:100%;max-width:360px;text-align:center;">
-        <span class="material-symbols-outlined" style="font-size:44px;color:#e31e24;margin-bottom:10px;display:block;">help</span>
-        <p style="font-size:17px;font-weight:800;color:#1a1c1f;margin-bottom:8px;">Zakazni bekor qilasizmi?</p>
-        <p style="font-size:13px;color:#5c5b5b;margin-bottom:24px;line-height:1.5;">
-          Buyurtma № {{ order.pk }} bekor qilinadi. Bu amalni ortga qaytarib bo'lmaydi.
-        </p>
-        <div style="display:flex;gap:10px;">
-          <button onclick="document.getElementById('cancelModal').style.display='none'"
-                  style="flex:1;padding:14px;border-radius:14px;border:none;cursor:pointer;
-                         background:#ededf2;color:#1a1c1f;font-size:14px;font-weight:700;">
-            Yo'q
-          </button>
-          <form method="POST" action="{% url 'orders:order_cancel' order.pk %}" style="flex:1;">
-            {% csrf_token %}
-            <button type="submit"
-                    style="width:100%;padding:14px;border-radius:14px;border:none;cursor:pointer;
-                           background:#1a1c1f;color:#fff;font-size:14px;font-weight:700;">
-              Ha, bekor qilish
-            </button>
-          </form>
-        </div>
-      </div>
+    <!-- ── Cancel button (2 daqiqa ichida ko'rinadi) ── -->
+    <div id="cancelSection" style="display:none;margin-top:10px;">
+      <button id="cancelBtn" onclick="openCancelConfirm()"
+              style="display:flex;align-items:center;justify-content:center;gap:8px;
+                     width:100%;background:#1a1c1f;color:#fff;
+                     padding:16px;border-radius:18px;border:none;cursor:pointer;
+                     font-size:15px;font-weight:700;active:opacity-80;">
+        <span class="material-symbols-outlined" style="font-size:20px;">cancel</span>
+        Zakazni bekor qilish
+        <span id="cancelTimer"
+              style="font-size:12px;font-weight:600;opacity:0.6;
+                     background:rgba(255,255,255,.15);padding:2px 9px;border-radius:999px;"></span>
+      </button>
     </div>
-    {% endif %}
+
+    <!-- ── Already-cancelled message ── -->
+    <div id="cancelledMsg"
+         style="display:none;margin-top:10px;background:#1a1c1f;color:#fff;
+                padding:15px 16px;border-radius:18px;
+                align-items:center;justify-content:center;gap:8px;
+                font-size:14px;font-weight:700;text-align:center;">
+      <span class="material-symbols-outlined" style="font-size:18px;color:#e74c3c;vertical-align:middle;">cancel</span>
+      Buyurtma bekor qilindi
+    </div>
 
   </div>
 </main>
+
+<!-- ════ CANCEL CONFIRM DIALOG ════ -->
+<div id="cancelOverlay"
+     style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);
+            align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#1a1c1f;border-radius:22px;padding:28px 20px;
+              max-width:320px;width:100%;text-align:center;">
+    <div style="width:56px;height:56px;border-radius:50%;background:rgba(227,30,36,.2);
+                display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+      <span class="material-symbols-outlined" style="font-size:30px;color:#e31e24;">help</span>
+    </div>
+    <p style="color:#fff;font-size:16px;font-weight:800;margin-bottom:6px;">
+      Zakazni bekor qilasizmi?
+    </p>
+    <p style="color:rgba(255,255,255,.5);font-size:13px;margin-bottom:24px;line-height:1.5;">
+      Buyurtma №{{ order.pk }} bekor qilinadi va restoranga xabar yuboriladi.
+    </p>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeCancelConfirm()"
+              style="flex:1;padding:14px;border-radius:14px;border:none;cursor:pointer;
+                     background:rgba(255,255,255,.1);color:#fff;font-size:14px;font-weight:700;">
+        Yo'q
+      </button>
+      <button id="cancelYesBtn" onclick="doCancelYes()"
+              style="flex:2;padding:14px;border-radius:14px;border:none;cursor:pointer;
+                     background:#e31e24;color:#fff;font-size:14px;font-weight:700;">
+        Ha, bekor qilish
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  var _pk      = {{ order.pk }};
+  var _token   = "{{ cancel_token }}";
+  var _expMs   = {{ cancel_expires_ms }};  /* server created_at + 2 daqiqa (ms) */
+  var _status  = "{{ order.status }}";
+
+  /* LocalStorage — refresh qilganda ham saqlanadi */
+  try {
+    localStorage.setItem('fl_last_pk',    _pk);
+    localStorage.setItem('fl_last_exp',   _expMs);
+    localStorage.setItem('fl_last_token', _token);
+    localStorage.setItem('fl_last_status', _status);
+  } catch(e){}
+
+  var secEl   = document.getElementById('cancelSection');
+  var timerEl = document.getElementById('cancelTimer');
+
+  function _tick(){
+    if(_status !== 'new') return;
+    var rem = Math.max(0, Math.floor((_expMs - Date.now()) / 1000));
+    if(rem > 0){
+      if(secEl) secEl.style.display = '';
+      if(timerEl){
+        var m = Math.floor(rem/60), s = rem%60;
+        timerEl.textContent = m+':'+(s<10?'0':'')+s;
+      }
+      setTimeout(_tick, 1000);
+    } else {
+      if(secEl) secEl.style.display = 'none';
+    }
+  }
+  _tick();
+
+  window.openCancelConfirm = function(){
+    document.getElementById('cancelOverlay').style.display = 'flex';
+  };
+  window.closeCancelConfirm = function(){
+    document.getElementById('cancelOverlay').style.display = 'none';
+  };
+
+  window.doCancelYes = function(){
+    var yesBtn = document.getElementById('cancelYesBtn');
+    if(yesBtn){ yesBtn.disabled = true; yesBtn.textContent = 'Yuklanmoqda…'; }
+
+    var body = new URLSearchParams();
+    body.append('token', _token);
+
+    fetch('/orders/cancel/'+_pk+'/', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': _csrf(),
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: body.toString()
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      closeCancelConfirm();
+      if(d.ok){
+        _status = 'cancelled';
+        try{ localStorage.setItem('fl_last_status','cancelled'); }catch(e){}
+        if(secEl) secEl.style.display = 'none';
+        var msg = document.getElementById('cancelledMsg');
+        if(msg){ msg.style.display = 'flex'; }
+        var st = document.getElementById('orderStatusText');
+        if(st){ st.textContent = 'Bekor qilindi'; st.style.color = '#e31e24'; }
+        setTimeout(function(){ window.location.href = '/'; }, 2200);
+      } else {
+        if(yesBtn){ yesBtn.disabled = false; yesBtn.textContent = 'Ha, bekor qilish'; }
+        alert(d.error || 'Xatolik yuz berdi');
+      }
+    })
+    .catch(function(){
+      closeCancelConfirm();
+      if(yesBtn){ yesBtn.disabled = false; yesBtn.textContent = 'Ha, bekor qilish'; }
+      alert("Internet xatosi. Qayta urinib ko'ring.");
+    });
+  };
+
+  function _csrf(){
+    var v = '; '+document.cookie;
+    var p = v.split('; csrftoken=');
+    if(p.length===2) return p.pop().split(';').shift();
+    return '';
+  }
+})();
+</script>
 {% endblock %}
