@@ -41,7 +41,8 @@
   </script>
 
   <!-- Favicon -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23e31e24'/><text y='.9em' font-size='68' x='50%' text-anchor='middle' dominant-baseline='hanging' font-family='sans-serif' font-weight='bold' fill='white'>FC</text></svg>">
+  <link rel="icon" type="image/png" href="{% static 'img/logo.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'img/logo.png' %}">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -75,12 +76,11 @@
 <!-- ═══ TOP APP BAR ═══ -->
 <header id="mainHeader" class="fixed top-0 w-full z-50 flex justify-between items-center px-4 h-16"
         style="background:#f9f9fe;box-shadow:0 1px 0 #e7bdb8;">
-  <a href="{% url 'menu:menu_list' %}" class="flex items-center gap-3 no-underline">
-    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-         style="background:#e31e24;">
-      <span class="text-white font-bold text-sm">FC</span>
-    </div>
-    <span class="font-bold text-lg" style="color:#1a1c1f;">Florella Cafe</span>
+  <a href="{% url 'menu:menu_list' %}" class="flex items-center gap-2 no-underline">
+    <img src="{% static 'img/logo.png' %}" alt="Florella"
+         style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;
+                box-shadow:0 2px 8px rgba(0,0,0,.18);">
+    <span class="font-bold text-lg" style="color:#1a1c1f;">Florella</span>
   </a>
   <div class="flex items-center gap-2">
     {% if request.session.tg_id %}
@@ -153,19 +153,19 @@
 <!-- ═══ BOTTOM NAV ═══ -->
 <nav id="bottomNav" class="fixed bottom-0 w-full z-50 flex justify-around items-center"
      style="height:68px;background:#f9f9fe;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.06);">
-  <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-4"
+  <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-3"
           style="color:#e31e24;" id="navHome"
           onclick="window.scrollTo({top:0,behavior:'smooth'})">
     <span class="material-symbols-outlined" style="font-size:24px;font-variation-settings:'FILL' 1,'wght' 400;">home</span>
-    <span style="font-size:11px;font-weight:600;">Бош</span>
+    <span style="font-size:10px;font-weight:600;">Бош</span>
   </button>
-  <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-4"
+  <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-3"
           style="color:#5d3f3c;" id="navMenu"
           onclick="document.getElementById('menu')?.scrollIntoView({behavior:'smooth'})">
     <span class="material-symbols-outlined" style="font-size:24px;">restaurant_menu</span>
-    <span style="font-size:11px;font-weight:600;">Меню</span>
+    <span style="font-size:10px;font-weight:600;">Меню</span>
   </button>
-  <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-4"
+  <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-3"
           style="color:#5d3f3c;" id="navCart"
           onclick="openCartDrawer()">
     <span class="relative">
@@ -174,15 +174,60 @@
             class="absolute flex items-center justify-center rounded-full font-extrabold border"
             style="top:-6px;right:-10px;min-width:16px;height:16px;font-size:9px;background:#e31e24;color:#fff;border-color:#f9f9fe;padding:0 3px;">0</span>
     </span>
-    <span style="font-size:11px;font-weight:600;">Савад</span>
+    <span style="font-size:10px;font-weight:600;">Савад</span>
   </button>
-  <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-4"
+  <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-3"
+          style="color:#5d3f3c;" id="navOrders"
+          onclick="openOrdersOrLogin()">
+    <span class="material-symbols-outlined" style="font-size:24px;">receipt_long</span>
+    <span style="font-size:10px;font-weight:600;">Буюртмалар</span>
+  </button>
+  <button class="bnav-btn flex flex-col items-center justify-center gap-0.5 px-3"
           style="color:#5d3f3c;" id="navAbout"
           onclick="document.getElementById('about')?.scrollIntoView({behavior:'smooth'})">
     <span class="material-symbols-outlined" style="font-size:24px;">info</span>
-    <span style="font-size:11px;font-weight:600;">Ҳақимизда</span>
+    <span style="font-size:10px;font-weight:600;">Ҳақимизда</span>
   </button>
 </nav>
+
+<!-- ═══ LOGIN PROMPT MODAL (Buyurtmalarim uchun) ═══ -->
+<div id="loginPromptModal" class="fixed inset-0 z-[80] pointer-events-none">
+  <div id="loginPromptBackdrop" onclick="closeLoginPrompt()"
+       class="absolute inset-0 transition-[background-color] duration-300" style="background:transparent;"></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:center;pointer-events:none;">
+  <div id="loginPromptPanel"
+       style="width:100%;max-width:480px;pointer-events:auto;
+              background:#f9f9fe;border-radius:24px 24px 0 0;padding:0 0 32px;
+              transform:translateY(100%);transition:transform .3s cubic-bezier(.32,0,.67,0);">
+    <div class="flex justify-center pt-3 pb-1">
+      <div class="w-10 h-1 rounded-full" style="background:#e7bdb8;"></div>
+    </div>
+    <div style="padding:20px 20px 24px;text-align:center;">
+      <div style="width:64px;height:64px;border-radius:50%;background:#fff0f1;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+        <span class="material-symbols-outlined" style="font-size:32px;color:#e31e24;">receipt_long</span>
+      </div>
+      <h3 style="font-size:18px;font-weight:800;color:#1a1c1f;margin-bottom:8px;">Buyurtmalaringiz</h3>
+      <p style="font-size:14px;color:#5c5b5b;line-height:1.5;margin-bottom:24px;">
+        Buyurtmalar tarixini ko'rish uchun<br>Telegram orqali kiring
+      </p>
+      <a href="{% url 'tgauth:login' %}"
+         style="display:flex;align-items:center;justify-content:center;gap:10px;
+                background:#2196F3;color:#fff;padding:15px 24px;border-radius:16px;
+                text-decoration:none;font-size:15px;font-weight:700;margin-bottom:12px;">
+        <svg width="20" height="20" viewBox="0 0 36 36" fill="white">
+          <path d="M25.5 11.5L7 17.5l6 2.5 2.5 6.5 2.5-5 5 4.5 2.5-14z"/>
+        </svg>
+        Telegram orqali kirish
+      </a>
+      <button onclick="closeLoginPrompt()"
+              style="width:100%;padding:13px;border-radius:16px;border:none;cursor:pointer;
+                     background:#ededf2;color:#5c5b5b;font-size:14px;font-weight:600;">
+        Bekor qilish
+      </button>
+    </div>
+  </div>
+  </div>
+</div>
 
 <!-- ═══ CART SUMMARY BAR (pastda) ═══ -->
 <div id="cartBar"
@@ -765,6 +810,31 @@ function closeOrderModal(){
   document.body.style.overflow='';
 }
 
+/* ── Buyurtmalarim: login yoki profil ── */
+var _isLoggedIn = {% if request.session.tg_id %}true{% else %}false{% endif %};
+function openOrdersOrLogin(){
+  if(_isLoggedIn){
+    window.location.href = "{% url 'tgauth:profile' %}";
+  } else {
+    var m=document.getElementById('loginPromptModal');
+    var p=document.getElementById('loginPromptPanel');
+    var b=document.getElementById('loginPromptBackdrop');
+    m.classList.remove('pointer-events-none');
+    b.style.background='rgba(0,0,0,.5)';
+    p.style.transform='translateY(0)';
+    document.body.style.overflow='hidden';
+  }
+}
+function closeLoginPrompt(){
+  var m=document.getElementById('loginPromptModal');
+  var p=document.getElementById('loginPromptPanel');
+  var b=document.getElementById('loginPromptBackdrop');
+  b.style.background='transparent';
+  p.style.transform='translateY(100%)';
+  setTimeout(function(){m.classList.add('pointer-events-none');},300);
+  document.body.style.overflow='';
+}
+
 /* ── Search overlay ── */
 document.getElementById('searchToggleBtn').addEventListener('click',function(){
   document.getElementById('searchOverlay').style.transform='translateY(0)';
@@ -853,7 +923,7 @@ _chkObs.observe(document.getElementById('checkoutBtn'),{attributes:true,attribut
     var aTop=aboutSec?aboutSec.getBoundingClientRect().top+y-100:Infinity;
     var idx=0;
     if(y>=mTop&&y<aTop) idx=1;
-    else if(y>=aTop) idx=3;
+    else if(y>=aTop) idx=4;
     setActive(idx);
   },{passive:true});
 })();
