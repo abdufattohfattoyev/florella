@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Florella Cafe — Toshkentda sushi, rollar va pizza yetkazib berish | Menyu{% endblock %}
 
 {% block extra_head %}
@@ -301,7 +302,12 @@
 
   <!-- ════ FOOTER ════ -->
   <footer class="mx-4" style="margin-top:32px;background:#1a1c1f;border-radius:20px;padding:24px;color:#fff;">
-    <p style="font-size:18px;font-weight:800;margin-bottom:4px;">🌸 Florella Cafe</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <img src="{% static 'img/logo.png' %}" alt="Florella"
+           style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;
+                  box-shadow:0 2px 8px rgba(0,0,0,.4);">
+      <p style="font-size:18px;font-weight:800;">Florella Cafe</p>
+    </div>
     <p style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:20px;">Ҳар бир таом — бир ҳис</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
       <div>
